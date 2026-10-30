@@ -25,9 +25,9 @@
   We ship with two themes, a light one inspired on Phoenix colors and a dark one inspired
   on Elixir colors. Build your own at: https://daisyui.com/theme-generator/ */
 @plugin "../vendor/daisyui-theme" {
-  name: "dracula";
+  name: "dark"; /* dracula palette */
   default: false;
-  prefersdark: false;
+  prefersdark: true;
   color-scheme: "dark";
   --color-base-100: oklch(28.822% 0.022 277.508);
   --color-base-200: oklch(26.805% 0.02 277.508);
@@ -60,8 +60,8 @@
 }
 
 @plugin "../vendor/daisyui-theme" {
-  name: "retro";
-  default: false;
+  name: "light"; /* retro palette */
+  default: true;
   prefersdark: false;
   color-scheme: "light";
   --color-base-100: oklch(91.637% 0.034 90.515);
