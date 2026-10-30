@@ -63,6 +63,9 @@ defmodule EcosimWeb.Router do
     live_session :current_user,
       on_mount: [{EcosimWeb.UserAuth, :mount_current_scope}] do
       live "/", HomeLive, :index
+      live "/create-sim", CreateSimLive, :index
+      live "/join-sim", JoinSimLive, :index
+
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
