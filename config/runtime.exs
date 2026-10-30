@@ -24,8 +24,17 @@ config :ecosim, EcosimWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 if config_env() == :prod do
+  # Reads a secret from the file at `NAME_FILE` (e.g. a Docker secret mounted
+  # under /run/secrets) when set, falling back to the `NAME` env var.
+  get_secret = fn name ->
+    case System.get_env(name <> "_FILE") do
+      nil -> System.get_env(name)
+      path -> path |> File.read!() |> String.trim()
+    end
+  end
+
   database_url =
-    System.get_env("DATABASE_URL") ||
+    get_secret.("DATABASE_URL") ||
       raise """
       environment variable DATABASE_URL is missing.
       For example: ecto://USER:PASS@HOST/DATABASE
@@ -47,7 +56,7 @@ if config_env() == :prod do
   # to check this value into version control, so we use an environment
   # variable instead.
   secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
+    get_secret.("SECRET_KEY_BASE") ||
       raise """
       environment variable SECRET_KEY_BASE is missing.
       You can generate one by calling: mix phx.gen.secret

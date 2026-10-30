@@ -35,3 +35,7 @@ ecosim-*.tar
 npm-debug.log
 /assets/node_modules/
 
+
+# Production secrets
+.env.prod
+/secrets/

@@ -1,0 +1,50 @@
+# Production stack: the Phoenix release built from ./Dockerfile, backed by an
+# external (Scaleway) Postgres.
+#
+# Secrets are read from files in ./secrets and mounted under /run/secrets:
+#
+#   mkdir -p secrets
+#   printf '%s' 'ecto://USER:PASS@HOST:5432/DB' > secrets/database_url
+#   mix phx.gen.secret | tr -d '\n' > secrets/secret_key_base
+#   chmod 644 secrets/*   # the release runs as `nobody` and must read them
+#
+#   PHX_HOST=ecosim.example.com docker compose -f docker-compose.prod.yml up -d --build
+
+x-app-env: &app-env
+  DATABASE_URL_FILE: /run/secrets/database_url
+  SECRET_KEY_BASE_FILE: /run/secrets/secret_key_base
+  PHX_HOST: ${PHX_HOST:?PHX_HOST is required}
+  PORT: 4000
+  POOL_SIZE: ${POOL_SIZE:-10}
+
+x-app-secrets: &app-secrets
+  - database_url
+  - secret_key_base
+
+services:
+  # One-shot job that runs pending Ecto migrations before the app starts.
+  migrate:
+    build: .
+    image: ecosim:latest
+    command: ["/app/bin/migrate"]
+    environment: *app-env
+    secrets: *app-secrets
+    restart: "no"
+
+  app:
+    image: ecosim:latest
+    restart: unless-stopped
+    init: true
+    environment: *app-env
+    secrets: *app-secrets
+    ports:
+      - "${APP_PORT:-4000}:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+secrets:
+  database_url:
+    file: ./secrets/database_url
+  secret_key_base:
+    file: ./secrets/secret_key_base

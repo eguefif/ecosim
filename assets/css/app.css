@@ -58,7 +58,6 @@
   --depth: 0;
   --noise: 0;
 }
-}
 
 @plugin "../vendor/daisyui-theme" {
   name: "retro";
