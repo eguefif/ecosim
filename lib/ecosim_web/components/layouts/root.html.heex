@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content={get_csrf_token()} />
     <.live_title default="Ecosim" suffix=" · Phoenix Framework" phx-no-format>{assigns[:page_title]}</.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
@@ -69,6 +69,8 @@
         -->
       </ul>
     </header>
-    {@inner_content}
+    <div class="w-[256px] lg:w-[768px] mx-auto mt-[32px]">
+      {@inner_content}
+    </div>
   </body>
 </html>

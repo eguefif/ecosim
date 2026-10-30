@@ -4,9 +4,9 @@ defmodule EcosimWeb.CreateSimLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="">
+    <.header>
       Create Sim
-    </div>
+    </.header>
     """
   end
 

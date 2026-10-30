@@ -4,8 +4,8 @@ defmodule EcosimWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-screen flex flex-col">
-      <div class="flex flex-row gap-[32px] w-[196px] h-[196px] mx-auto my-auto">
+    <div class="h-screen">
+      <div class="flex flex-col md:flex-row gap-[32px] w-[196px] h-[196px] mx-auto">
         <a
           href={~p"/create-sim"}
           class="container shadow-md p-[64px] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200"

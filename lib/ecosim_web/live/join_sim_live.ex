@@ -4,9 +4,9 @@ defmodule EcosimWeb.JoinSimLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="">
+    <.header>
       Join Sim
-    </div>
+    </.header>
     """
   end
 

@@ -24,3 +24,8 @@ init:
     @printf '\nSwarm initialized. Before running `just deploy`, create the secrets:\n\n'
     @printf "  printf '%%s' 'ecto://USER:PASS@HOST:5432/DB' | docker secret create database_url -\n"
     @printf "  mix phx.gen.secret | tr -d '\\\\n' | docker secret create secret_key_base -\n\n"
+
+# Remove stopped containers and images not used by any container
+clean:
+    docker container prune -f
+    docker image prune -af
