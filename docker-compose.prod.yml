@@ -26,6 +26,7 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
+      - --log.level=DEBUG
       - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
@@ -39,7 +40,9 @@ services:
         mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt:/letsencrypt
+      # Certificates live on the manager host. Create the directory first:
+      #   sudo mkdir -p /opt/ecosim/letsencrypt
+      - /opt/ecosim/letsencrypt:/letsencrypt
     networks:
       - web
     deploy:
@@ -86,9 +89,6 @@ services:
 networks:
   web:
     driver: overlay
-
-volumes:
-  letsencrypt:
 
 secrets:
   database_url:
