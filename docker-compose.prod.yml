@@ -1,8 +1,13 @@
-# Production Swarm stack: the Phoenix release built from ./Dockerfile, backed by
-# an external (Scaleway) Postgres. Secrets must exist in the swarm beforehand:
+# Production Swarm stack: Traefik terminates TLS (Let's Encrypt certificates via
+# its built-in ACME client) and proxies to the Phoenix release built from
+# ./Dockerfile, backed by an external (Scaleway) Postgres. Secrets must exist in
+# the swarm beforehand:
 #
 #   printf '%s' 'ecto://USER:PASS@HOST:5432/DB' | docker secret create database_url -
 #   mix phx.gen.secret | tr -d '\n' | docker secret create secret_key_base -
+#
+# DNS for grb-amateur.space must point at the swarm manager, and ports 80/443
+# must be reachable from the internet for the ACME HTTP challenge.
 #
 # Deploy (stack deploy does not read .env files, so export the vars first):
 #
@@ -11,22 +16,58 @@
 #   docker stack deploy --with-registry-auth -c docker-compose.prod.yml ecosim
 
 services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - --providers.swarm=true
+      - --providers.swarm.exposedbydefault=false
+      - --providers.swarm.network=ecosim_web
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    ports:
+      # Host mode so the app sees real client IPs instead of the ingress mesh.
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - web
+    deploy:
+      replicas: 1
+      placement:
+        # Needs the manager's Docker API, and keeps acme.json on one node.
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
   app:
-    image: ghcr.io/eguefif/ecosim:latest
+    image: ghcr.io/eguefif/ecosim:${IMAGE_TAG:-latest}
     # Run pending migrations, then replace the shell with the release.
     command: ["sh", "-c", "/app/bin/migrate && exec /app/bin/server"]
     init: true
     environment:
       DATABASE_URL_FILE: /run/secrets/database_url
       SECRET_KEY_BASE_FILE: /run/secrets/secret_key_base
-      PHX_HOST: "localhost"
+      PHX_HOST: ${PHX_HOST:-grb-amateur.space}
       PORT: 4000
       POOL_SIZE: ${POOL_SIZE:-10}
     secrets:
       - database_url
       - secret_key_base
-    ports:
-      - "80:4000"
+    networks:
+      - web
     deploy:
       replicas: 1
       restart_policy:
@@ -35,6 +76,19 @@ services:
       update_config:
         order: start-first
         failure_action: rollback
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.ecosim.rule=Host(`${PHX_HOST:-grb-amateur.space}`)
+        - traefik.http.routers.ecosim.entrypoints=websecure
+        - traefik.http.routers.ecosim.tls.certresolver=letsencrypt
+        - traefik.http.services.ecosim.loadbalancer.server.port=4000
+
+networks:
+  web:
+    driver: overlay
+
+volumes:
+  letsencrypt:
 
 secrets:
   database_url:
