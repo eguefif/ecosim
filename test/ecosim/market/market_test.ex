@@ -84,8 +84,26 @@ defmodule Ecosim.MarketTest do
       assert action.params == %{actors: [buyer, seller], price: 5}
     end
 
-    @tag :skip
-    test "removes both b1 and s1 for the period actors" do
+    test "removes both b1 and s1 for the period actors", %{
+      market: market,
+      seller: seller,
+      buyer: buyer
+    } do
+      [period | _] = market.periods
+      actors_length_before = length(period.actors)
+
+      market =
+        market
+        |> Market.update(:sell_at, %{actor: seller, price: 5})
+        |> Market.update(:accept, %{actor: buyer, price: 5})
+
+      [period | _] = market.periods
+      actors_length_after = length(period.actors)
+
+      assert actors_length_after != actors_length_before
+      assert actors_length_after == 2
+      assert seller not in period.actors
+      assert buyer not in period.actors
     end
   end
 
@@ -115,8 +133,26 @@ defmodule Ecosim.MarketTest do
       assert action.params == %{actors: [seller, buyer], price: 5}
     end
 
-    @tag :skip
-    test "removes both b1 and s1 for the period actors" do
+    test "removes both b1 and s1 for the period actors", %{
+      market: market,
+      seller: seller,
+      buyer: buyer
+    } do
+      [period | _] = market.periods
+      actors_length_before = length(period.actors)
+
+      market =
+        market
+        |> Market.update(:buy_at, %{actor: buyer, price: 5})
+        |> Market.update(:accept, %{actor: seller, price: 5})
+
+      [period | _] = market.periods
+      actors_length_after = length(period.actors)
+
+      assert actors_length_after != actors_length_before
+      assert actors_length_after == 2
+      assert seller not in period.actors
+      assert buyer not in period.actors
     end
   end
 
@@ -127,18 +163,6 @@ defmodule Ecosim.MarketTest do
 
     @tag :skip
     test "a seller cannot offer a price lesser than their WTA" do
-    end
-  end
-
-  describe "Period" do
-    @tag :skip
-    test "A period stop after XX actions with no transaction and at least 1 action" do
-    end
-  end
-
-  describe "Market" do
-    @tag :skip
-    test "A Market simulation stops when there is 5 periods by default" do
     end
   end
 end

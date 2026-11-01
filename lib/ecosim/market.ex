@@ -13,7 +13,7 @@ defmodule Ecosim.Market do
 
   @spec new([String.t()], [String.t()]) :: t()
   def new(buyers, sellers) do
-    period = Period.new()
+    period = Period.new(buyers ++ sellers)
 
     %__MODULE__{
       buyers: buyers,
@@ -31,7 +31,7 @@ defmodule Ecosim.Market do
   def update(%__MODULE__{} = market, :add_period, _) do
     %__MODULE__{
       market
-      | periods: [Period.new() | market.periods]
+      | periods: [Period.new(market.buyers ++ market.sellers) | market.periods]
     }
   end
 

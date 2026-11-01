@@ -5,15 +5,16 @@ defmodule Ecosim.Market.Period do
   alias Ecosim.Market.Action
   alias Ecosim.Market.Actor
 
-  defstruct actions: []
+  defstruct [:actors, actions: []]
 
   @type t() :: %__MODULE__{
-          actions: [Action.t()]
+          actions: [Action.t()],
+          actors: [Actor.t()]
         }
 
-  @spec new() :: t()
-  def new() do
-    %__MODULE__{actions: []}
+  @spec new([Actor.t()]) :: t()
+  def new(actors) do
+    %__MODULE__{actions: [], actors: actors}
   end
 
   @doc """
@@ -24,11 +25,22 @@ defmodule Ecosim.Market.Period do
   - :sell_at
   - :accept
   """
+  def add_action(%__MODULE__{} = period, :accept, params) do
+    action = Action.new(:accept, params)
+    actors_to_remove = action.params |> Map.get(:actors) |> Enum.map(& &1.name)
+
+    %__MODULE__{
+      actors: Enum.reject(period.actors, fn actor -> actor.name in actors_to_remove end),
+      actions: List.insert_at(period.actions, -1, action)
+    }
+  end
+
   def add_action(%__MODULE__{} = period, action, params) do
     action = Action.new(action, params)
 
     %__MODULE__{
-      actions: List.insert_at(period.actions, -1, action)
+      period
+      | actions: List.insert_at(period.actions, -1, action)
     }
   end
 
