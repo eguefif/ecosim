@@ -7,7 +7,7 @@ defmodule Ecosim.MarketTest do
     setup do
       buyers = ["b1", "b3"]
       sellers = ["s1", "s2"]
-      market = Market.create(buyers, sellers)
+      market = Market.new(buyers, sellers)
       [market: market]
     end
 
@@ -26,7 +26,7 @@ defmodule Ecosim.MarketTest do
 
     test "add an two actions to the current period", %{market: market} do
       market = Market.update(market, :sell_at, %{actor: "b1", price: 5})
-      %{periods: periods} = market = Market.update(market, :buy_at, %{actor: "s2", price: 3})
+      %{periods: periods} = Market.update(market, :buy_at, %{actor: "s2", price: 3})
       [period] = periods
       [action1, action2] = period.actions
 
@@ -44,21 +44,93 @@ defmodule Ecosim.MarketTest do
       sellers = ["s1", "s2"]
 
       market =
-        Market.create(buyers, sellers)
-        |> Market.update(:sell_at, %{actor: "b1", price: 8})
-        |> Market.update(:sell_at, %{actor: "b1", price: 7})
-        |> Market.update(:buy_at, %{actor: "s1", price: 3})
-        |> Market.update(:sell_at, %{actor: "b1", price: 5})
-        |> Market.update(:accept, %{actor: "s1", price: 5})
+        Market.new(buyers, sellers)
 
       [market: market]
     end
 
+    test "do nothing if no seller price", %{market: market} do
+      market =
+        market
+        |> Market.update(:accept, %{actor: "b1", price: 5})
+
+      action = Market.last_action(market)
+
+      assert is_nil(action)
+    end
+
     test "add a transaction between b1 and s1", %{market: market} do
+      market =
+        market
+        |> Market.update(:sell_at, %{actor: "s1", price: 8})
+        |> Market.update(:sell_at, %{actor: "s1", price: 7})
+        |> Market.update(:buy_at, %{actor: "b1", price: 3})
+        |> Market.update(:sell_at, %{actor: "s1", price: 5})
+        |> Market.update(:accept, %{actor: "b1", price: 5})
+
       action = Market.last_action(market)
 
       assert action.action == :transact
-      assert action.params == %{seller: "s1", buyer: "b1", price: 5}
+      assert action.params == %{actors: ["b1", "s1"], price: 5}
+    end
+  end
+
+  describe "seller takes last buyer's price" do
+    setup do
+      buyers = ["b1", "b3"]
+      sellers = ["s1", "s2"]
+
+      market =
+        Market.new(buyers, sellers)
+
+      [market: market]
+    end
+
+    test "do nothing if no buyer's price", %{market: market} do
+      market =
+        market
+        |> Market.update(:accept, %{actor: "s1", price: 5})
+
+      action = Market.last_action(market)
+
+      assert is_nil(action)
+    end
+
+    test "add a transaction between b1 and s1", %{market: market} do
+      market =
+        market
+        |> Market.update(:buy_at, %{actor: "b1", price: 8})
+        |> Market.update(:buy_at, %{actor: "b1", price: 7})
+        |> Market.update(:sell_at, %{actor: "s1", price: 3})
+        |> Market.update(:buy_at, %{actor: "b1", price: 5})
+        |> Market.update(:accept, %{actor: "s1", price: 5})
+
+      action = Market.last_action(market)
+
+      assert action.action == :transact
+      assert action.params == %{actors: ["s1", "b1"], price: 5}
+    end
+  end
+
+  describe "WTB/WTA" do
+    @tag :skip
+    test "a buyer cannot offer a price greater than their WTB" do
+    end
+
+    @tag :skip
+    test "a seller cannot offer a price lesser than their WTA" do
+    end
+  end
+
+  describe "Period" do
+    @tag :skip
+    test "A period stop after XX actions with no transaction and at least 1 action" do
+    end
+  end
+
+  describe "Market" do
+    @tag :skip
+    test "A Market simulation stops when there is 5 periods by default" do
     end
   end
 end

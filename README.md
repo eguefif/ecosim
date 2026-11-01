@@ -3,6 +3,13 @@
 
 ## TODO
 
+- [ ] Make sure all specs are there
+- [ ] Update documentation
+- [ ] Add a Actor module with WTA and WTP
+- [ ] ERror check
+    - [ ] buy at should actor should be in buyer's list
+    - [ ] same for seller
+
  ### Infra
 
  - [ ] Create new domain name ecosim.fr
