@@ -1,5 +1,9 @@
 defmodule Ecosim.Market.Period do
+  @moduledoc """
+  A period gather several actions.
+  """
   alias Ecosim.Market.Action
+  alias Ecosim.Market.Actor
 
   defstruct actions: []
 
@@ -39,10 +43,16 @@ defmodule Ecosim.Market.Period do
   @doc """
   Get the last offer made by an acton from the given list.
   """
-  @spec get_last_offer_from(t(), list()) :: Action.t() | nil
+  @spec get_last_offer_from(t(), [Actor.t()]) :: Action.t() | nil
   def get_last_offer_from(%__MODULE__{} = period, actors) do
     period.actions
-    |> Enum.filter(&(Action.get_actor(&1) in actors))
+    |> Enum.filter(&is_actor_in_list(&1, actors))
     |> List.last()
+  end
+
+  defp is_actor_in_list(actor_name, actor_list) do
+    actor = Action.get_actor(actor_name)
+    actor_list = Enum.map(actor_list, fn actor -> actor.name end)
+    actor.name in actor_list
   end
 end

@@ -1,6 +1,8 @@
 defmodule Ecosim.Market.Action do
   defstruct [:action, params: %{}]
 
+  alias Ecosim.Market.Actor
+
   @type t() :: %__MODULE__{
           action: atom(),
           params: map()
@@ -22,6 +24,7 @@ defmodule Ecosim.Market.Action do
     }
   end
 
+  @spec get_actor(t()) :: Actor.t()
   def get_actor(%__MODULE__{} = action) do
     Map.get(action.params, :actor)
   end

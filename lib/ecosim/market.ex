@@ -3,6 +3,7 @@ defmodule Ecosim.Market do
 
   alias Ecosim.Market.Period
   alias Ecosim.Market.Action
+  alias Ecosim.Market.Actor
 
   @type t() :: %__MODULE__{
           buyers: [String.t()],
@@ -54,16 +55,15 @@ defmodule Ecosim.Market do
     |> add_transaction(market, actor, price, period)
   end
 
-  @spec get_actor_list(t(), String.t()) :: [String.t()]
+  @spec get_actor_list(t(), Actor.t()) :: [String.t()]
   defp get_actor_list(market, actor) do
-    case what_is_actor(market, actor) do
+    case actor.type do
       :buyer -> market.sellers
       :seller -> market.buyers
-      _ -> raise "Error: unknown actor type"
     end
   end
 
-  @spec add_transaction([String.t()], t(), String.t(), float(), Period.t()) :: t()
+  @spec add_transaction([Actor.t()], t(), Actor.t(), float(), Period.t()) :: t()
   defp add_transaction(actor_list, market, actor, price, period) do
     case Period.get_last_offer_from(period, actor_list) do
       nil ->
@@ -80,18 +80,6 @@ defmodule Ecosim.Market do
                 })
               end)
         }
-    end
-  end
-
-  @spec what_is_actor(t(), String.t()) :: :buyer | :seller | :unknown
-  defp what_is_actor(market, actor) do
-    is_buyer = actor in market.buyers
-    is_seller = actor in market.sellers
-
-    case actor do
-      _ when is_buyer -> :buyer
-      _ when is_seller -> :seller
-      _ -> :unknown
     end
   end
 
