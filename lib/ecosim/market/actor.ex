@@ -23,4 +23,16 @@ defmodule Ecosim.Market.Actor do
       wt: wt
     }
   end
+
+  @doc """
+  Return true if the price is consistent with actor's WT.
+  """
+  @spec price_regarding_wt?(t(), float()) :: boolean
+  def price_regarding_wt?(%__MODULE__{} = actor, price) do
+    if actor.type == :buyer do
+      price <= actor.wt
+    else
+      price >= actor.wt
+    end
+  end
 end

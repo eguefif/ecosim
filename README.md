@@ -4,8 +4,14 @@
 ## TODO
 
 - [ ] Make sure all specs are there
-- [ ] Update documentation
-- [ ] Add a Actor module with WTA and WTP
+- [ ] Check the following
+    - [ ] Documentation for each modules
+    - [ ] Documentation for each functions
+    - [ ] Spec for all functions
+    - [ ] Error handling
+        - [ ] What if the wt is not respected.
+        - [ ] What if the accept could not find an offer. Do nothing?
+    - [ ] Create an end-to-end test and think of potential error: what error should be handled, what error should crash, what error should be ignored?
 - [ ] ERror check
     - [ ] buy at should actor should be in buyer's list
     - [ ] same for seller

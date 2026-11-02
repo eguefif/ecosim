@@ -45,11 +45,11 @@ defmodule Ecosim.Market.Period do
   end
 
   @doc """
-  Returns the last registered actions.
+  Returns period's actions.
   """
-  @spec last_action(t()) :: Action.t() | nil
-  def last_action(%__MODULE__{} = period) do
-    List.last(period.actions)
+  @spec actions(t()) :: Action.t() | nil
+  def actions(%__MODULE__{} = period) do
+    period.actions
   end
 
   @doc """

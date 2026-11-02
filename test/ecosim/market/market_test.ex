@@ -9,14 +9,14 @@ defmodule Ecosim.MarketTest do
 
     buyers = [
       buyer,
-      Actor.new(:buyer, "b2", 5)
+      Actor.new(:buyer, "b2", 10)
     ]
 
-    seller = Actor.new(:seller, "s1", 8)
+    seller = Actor.new(:seller, "s1", 3)
 
     sellers = [
       seller,
-      Actor.new(:seller, "s2", 5)
+      Actor.new(:seller, "s2", 2)
     ]
 
     market = Market.new(buyers, sellers)
@@ -34,7 +34,7 @@ defmodule Ecosim.MarketTest do
       buyer: buyer
     } do
       market = Market.update(market, :buy_at, %{actor: buyer, price: 5})
-      action = Market.last_action(market)
+      action = Market.actions(market) |> List.last()
 
       assert action.action == :buy_at
       assert action.params == %{actor: buyer, price: 5}
@@ -46,7 +46,7 @@ defmodule Ecosim.MarketTest do
       buyer: buyer
     } do
       market = Market.update(market, :sell_at, %{actor: buyer, price: 5})
-      %{periods: periods} = Market.update(market, :buy_at, %{actor: seller, price: 3})
+      %{periods: periods} = Market.update(market, :buy_at, %{actor: seller, price: 6})
       [period] = periods
       [action1, action2] = period.actions
 
@@ -54,7 +54,7 @@ defmodule Ecosim.MarketTest do
       assert action1.params == %{actor: buyer, price: 5}
 
       assert action2.action == :buy_at
-      assert action2.params == %{actor: seller, price: 3}
+      assert action2.params == %{actor: seller, price: 6}
     end
   end
 
@@ -62,9 +62,9 @@ defmodule Ecosim.MarketTest do
     test "do nothing if no seller price", %{market: market, buyer: buyer} do
       market =
         market
-        |> Market.update(:accept, %{actor: buyer, price: 5})
+        |> Market.update(:accept, %{actor: buyer})
 
-      action = Market.last_action(market)
+      action = Market.actions(market) |> List.last()
 
       assert is_nil(action)
     end
@@ -76,9 +76,9 @@ defmodule Ecosim.MarketTest do
         |> Market.update(:sell_at, %{actor: seller, price: 7})
         |> Market.update(:buy_at, %{actor: buyer, price: 3})
         |> Market.update(:sell_at, %{actor: seller, price: 5})
-        |> Market.update(:accept, %{actor: buyer, price: 5})
+        |> Market.update(:accept, %{actor: buyer})
 
-      action = Market.last_action(market)
+      action = Market.actions(market) |> List.last()
 
       assert action.action == :transact
       assert action.params == %{actors: [buyer, seller], price: 5}
@@ -95,7 +95,7 @@ defmodule Ecosim.MarketTest do
       market =
         market
         |> Market.update(:sell_at, %{actor: seller, price: 5})
-        |> Market.update(:accept, %{actor: buyer, price: 5})
+        |> Market.update(:accept, %{actor: buyer})
 
       [period | _] = market.periods
       actors_length_after = length(period.actors)
@@ -111,9 +111,9 @@ defmodule Ecosim.MarketTest do
     test "do nothing if no buyer's price", %{market: market, seller: seller} do
       market =
         market
-        |> Market.update(:accept, %{actor: seller, price: 5})
+        |> Market.update(:accept, %{actor: seller})
 
-      action = Market.last_action(market)
+      action = Market.actions(market) |> List.last()
 
       assert is_nil(action)
     end
@@ -125,9 +125,9 @@ defmodule Ecosim.MarketTest do
         |> Market.update(:buy_at, %{actor: buyer, price: 7})
         |> Market.update(:sell_at, %{actor: seller, price: 3})
         |> Market.update(:buy_at, %{actor: buyer, price: 5})
-        |> Market.update(:accept, %{actor: seller, price: 5})
+        |> Market.update(:accept, %{actor: seller})
 
-      action = Market.last_action(market)
+      action = Market.actions(market) |> List.last()
 
       assert action.action == :transact
       assert action.params == %{actors: [seller, buyer], price: 5}
@@ -144,7 +144,7 @@ defmodule Ecosim.MarketTest do
       market =
         market
         |> Market.update(:buy_at, %{actor: buyer, price: 5})
-        |> Market.update(:accept, %{actor: seller, price: 5})
+        |> Market.update(:accept, %{actor: seller})
 
       [period | _] = market.periods
       actors_length_after = length(period.actors)
@@ -157,12 +157,46 @@ defmodule Ecosim.MarketTest do
   end
 
   describe "WTB/WTA" do
-    @tag :skip
-    test "a buyer cannot offer a price greater than their WTB" do
+    test "a buyer cannot offer a price greater than their WTB", %{market: market, buyer: buyer} do
+      {result, message} = market |> Market.update(:buy_at, %{actor: buyer, price: 8.01})
+
+      assert result == :error
+      assert message == :price_not_in_wt
     end
 
-    @tag :skip
-    test "a seller cannot offer a price lesser than their WTA" do
+    test "a buyer cannot accept a price greater than their WTB", %{
+      market: market,
+      buyer: buyer,
+      seller: seller
+    } do
+      {result, message} =
+        market
+        |> Market.update(:sell_at, %{actor: seller, price: 8.01})
+        |> Market.update(:accept, %{actor: buyer})
+
+      assert result == :error
+      assert message == :price_not_in_wt
+    end
+
+    test "a seller cannot offer a price lesser than their WTA", %{market: market, seller: seller} do
+      {result, message} = market |> Market.update(:sell_at, %{actor: seller, price: 1.01})
+
+      assert result == :error
+      assert message == :price_not_in_wt
+    end
+
+    test "a seller cannot accept a price lesser than their WTA", %{
+      market: market,
+      buyer: buyer,
+      seller: seller
+    } do
+      {result, message} =
+        market
+        |> Market.update(:buy_at, %{actor: buyer, price: 1.01})
+        |> Market.update(:accept, %{actor: seller})
+
+      assert result == :error
+      assert message == :price_not_in_wt
     end
   end
 end
