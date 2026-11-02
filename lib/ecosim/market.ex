@@ -24,10 +24,15 @@ defmodule Ecosim.Market do
 
   @doc """
   Update the market according to the action and params.
+  Possible actions:
+  - :add_period
+  - :buy_at
+  - :sell_at
+  - :accept
   """
   def update(market, action, params \\ %{})
 
-  @spec update(t(), atom()) :: t()
+  @spec update(t(), atom()) :: t() | {:error, atom()}
   def update(%__MODULE__{} = market, :add_period, _) do
     %__MODULE__{
       market
@@ -37,22 +42,28 @@ defmodule Ecosim.Market do
 
   @spec update(t(), atom(), map()) :: t()
   def update(%__MODULE__{} = market, action, params) when action in [:buy_at, :sell_at] do
-    %{
-      market
-      | periods:
-          List.update_at(market.periods, -1, fn period ->
-            Period.add_action(period, action, params)
-          end)
-    }
+    %{actor: actor, price: price} = params
+
+    if Actor.price_regarding_wt?(actor, price) do
+      %{
+        market
+        | periods:
+            List.update_at(market.periods, -1, fn period ->
+              Period.add_action(period, action, params)
+            end)
+      }
+    else
+      {:error, :price_not_in_wt}
+    end
   end
 
   def update(%__MODULE__{} = market, :accept, params) do
-    %{actor: actor, price: price} = params
+    %{actor: actor} = params
     period = List.last(market.periods)
 
     market
     |> get_actor_list(actor)
-    |> add_transaction(market, actor, price, period)
+    |> add_transaction(market, actor, period)
   end
 
   @spec get_actor_list(t(), Actor.t()) :: [String.t()]
@@ -63,31 +74,35 @@ defmodule Ecosim.Market do
     end
   end
 
-  @spec add_transaction([Actor.t()], t(), Actor.t(), float(), Period.t()) :: t()
-  defp add_transaction(actor_list, market, actor, price, period) do
+  @spec add_transaction([Actor.t()], t(), Actor.t(), Period.t()) :: t()
+  defp add_transaction(actor_list, market, actor, period) do
     case Period.get_last_offer_from(period, actor_list) do
       nil ->
         market
 
-      %Action{params: %{actor: actor2}} ->
-        %{
-          market
-          | periods:
-              List.update_at(market.periods, -1, fn period ->
-                Period.add_action(period, :accept, %{
-                  actors: [actor, actor2],
-                  price: price
-                })
-              end)
-        }
+      %Action{params: %{actor: actor2, price: price}} ->
+        if Actor.price_regarding_wt?(actor, price) do
+          %{
+            market
+            | periods:
+                List.update_at(market.periods, -1, fn period ->
+                  Period.add_action(period, :accept, %{
+                    actors: [actor, actor2],
+                    price: price
+                  })
+                end)
+          }
+        else
+          {:error, :price_not_in_wt}
+        end
     end
   end
 
   @doc """
-  Retrieve the last action from the current period.
+  Retrieve the current period actions.
   """
-  @spec last_action(t()) :: Action.t()
-  def last_action(%__MODULE__{} = market) do
-    List.last(market.periods) |> Period.last_action()
+  @spec actions(t()) :: Action.t()
+  def actions(%__MODULE__{} = market) do
+    List.last(market.periods) |> Period.actions()
   end
 end
