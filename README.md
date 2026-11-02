@@ -5,9 +5,12 @@
 
 - [ ] Make sure all specs are there
 - [ ] Check the following
-    - [ ] Documentation for each modules
-    - [ ] Documentation for each functions
-    - [ ] Spec for all functions
+    - [ ] Documentation spec for each modules and functions
+        - [x] Market
+        - [ ] Period
+        - [ ] Action
+        - [ ] Actor
+    - [ ] Handle when there is no more buyer and seller. Terminate the period.
     - [ ] Error handling
         - [ ] What if the wt is not respected.
         - [ ] What if the accept could not find an offer. Do nothing?
