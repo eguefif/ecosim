@@ -11,7 +11,27 @@ defmodule Ecosim.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      test_coverage: [
+        ignore_modules: [
+          Ecosim.Release,
+          EcosimWeb.PageController,
+          EcosimWeb.PageHTML,
+          EcosimWeb,
+          EcosimWeb.CoreComponents,
+          Ecosim.Repo,
+          EcosimWeb.ErrorHTML,
+          Ecosim.Application,
+          EcosimWeb.ConnCase,
+          EcosimWeb.Router,
+          EcosimWeb.Telemetry,
+          Ecosim.AccountsFixtures
+        ]
+      ],
+      dialyzer: [
+        plt_core_path: "priv/plts",
+        plt_local_path: "priv/plts"
+      ]
     ]
   end
 

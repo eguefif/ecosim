@@ -39,3 +39,6 @@ npm-debug.log
 # Production secrets
 .env.prod
 /secrets/
+
+# Dialyzer PLTs
+/priv/plts/
