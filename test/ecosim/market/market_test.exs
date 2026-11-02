@@ -25,7 +25,7 @@ defmodule Ecosim.MarketTest do
 
   describe "Basic Market action" do
     test "add a new period on update :add_period", %{market: market} do
-      market = Market.update(market, :add_period)
+      {:ok, market} = Market.update(market, :add_period)
       assert length(market.periods) == 2
     end
 
@@ -33,7 +33,7 @@ defmodule Ecosim.MarketTest do
       market: market,
       buyer: buyer
     } do
-      market = Market.update(market, :buy_at, %{actor: buyer, price: 5})
+      {:ok, market} = Market.update(market, :buy_at, %{actor: buyer, price: 5})
       action = Market.actions(market) |> List.last()
 
       assert action.action == :buy_at
@@ -45,8 +45,8 @@ defmodule Ecosim.MarketTest do
       seller: seller,
       buyer: buyer
     } do
-      market = Market.update(market, :sell_at, %{actor: buyer, price: 5})
-      %{periods: periods} = Market.update(market, :buy_at, %{actor: seller, price: 6})
+      {:ok, market} = Market.update(market, :sell_at, %{actor: buyer, price: 5})
+      {:ok, %{periods: periods}} = Market.update(market, :buy_at, %{actor: seller, price: 6})
       [period] = periods
       [action1, action2] = period.actions
 
@@ -60,7 +60,7 @@ defmodule Ecosim.MarketTest do
 
   describe "buyer takes last seller price" do
     test "do nothing if no seller price", %{market: market, buyer: buyer} do
-      market =
+      {:ok, market} =
         market
         |> Market.update(:accept, %{actor: buyer})
 
@@ -70,18 +70,16 @@ defmodule Ecosim.MarketTest do
     end
 
     test "add a transaction between b1 and s1", %{market: market, seller: seller, buyer: buyer} do
-      market =
-        market
-        |> Market.update(:sell_at, %{actor: seller, price: 8})
-        |> Market.update(:sell_at, %{actor: seller, price: 7})
-        |> Market.update(:buy_at, %{actor: buyer, price: 3})
-        |> Market.update(:sell_at, %{actor: seller, price: 5})
-        |> Market.update(:accept, %{actor: buyer})
+      with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 8}),
+           {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 7}),
+           {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 3}),
+           {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 5}),
+           {:ok, market} <- Market.update(market, :accept, %{actor: buyer}) do
+        action = Market.actions(market) |> List.last()
 
-      action = Market.actions(market) |> List.last()
-
-      assert action.action == :transact
-      assert action.params == %{actors: [buyer, seller], price: 5}
+        assert action.action == :transact
+        assert action.params == %{actors: [buyer, seller], price: 5}
+      end
     end
 
     test "removes both b1 and s1 for the period actors", %{
@@ -92,24 +90,22 @@ defmodule Ecosim.MarketTest do
       [period | _] = market.periods
       actors_length_before = length(period.actors)
 
-      market =
-        market
-        |> Market.update(:sell_at, %{actor: seller, price: 5})
-        |> Market.update(:accept, %{actor: buyer})
+      with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 5}),
+           {:ok, market} <- Market.update(market, :accept, %{actor: buyer}) do
+        [period | _] = market.periods
+        actors_length_after = length(period.actors)
 
-      [period | _] = market.periods
-      actors_length_after = length(period.actors)
-
-      assert actors_length_after != actors_length_before
-      assert actors_length_after == 2
-      assert seller not in period.actors
-      assert buyer not in period.actors
+        assert actors_length_after != actors_length_before
+        assert actors_length_after == 2
+        assert seller not in period.actors
+        assert buyer not in period.actors
+      end
     end
   end
 
   describe "seller takes last buyer's price" do
     test "do nothing if no buyer's price", %{market: market, seller: seller} do
-      market =
+      {:ok, market} =
         market
         |> Market.update(:accept, %{actor: seller})
 
@@ -119,18 +115,16 @@ defmodule Ecosim.MarketTest do
     end
 
     test "add a transaction between b1 and s1", %{market: market, seller: seller, buyer: buyer} do
-      market =
-        market
-        |> Market.update(:buy_at, %{actor: buyer, price: 8})
-        |> Market.update(:buy_at, %{actor: buyer, price: 7})
-        |> Market.update(:sell_at, %{actor: seller, price: 3})
-        |> Market.update(:buy_at, %{actor: buyer, price: 5})
-        |> Market.update(:accept, %{actor: seller})
+      with {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 8}),
+           {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 7}),
+           {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 3}),
+           {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 5}),
+           {:ok, market} <- Market.update(market, :accept, %{actor: seller}) do
+        action = Market.actions(market) |> List.last()
 
-      action = Market.actions(market) |> List.last()
-
-      assert action.action == :transact
-      assert action.params == %{actors: [seller, buyer], price: 5}
+        assert action.action == :transact
+        assert action.params == %{actors: [seller, buyer], price: 5}
+      end
     end
 
     test "removes both b1 and s1 for the period actors", %{
@@ -141,26 +135,23 @@ defmodule Ecosim.MarketTest do
       [period | _] = market.periods
       actors_length_before = length(period.actors)
 
-      market =
-        market
-        |> Market.update(:buy_at, %{actor: buyer, price: 5})
-        |> Market.update(:accept, %{actor: seller})
+      with {:ok, market} <-
+             Market.update(market, :buy_at, %{actor: buyer, price: 5}),
+           {:ok, market} <- Market.update(market, :accept, %{actor: seller}) do
+        [period | _] = market.periods
+        actors_length_after = length(period.actors)
 
-      [period | _] = market.periods
-      actors_length_after = length(period.actors)
-
-      assert actors_length_after != actors_length_before
-      assert actors_length_after == 2
-      assert seller not in period.actors
-      assert buyer not in period.actors
+        assert actors_length_after != actors_length_before
+        assert actors_length_after == 2
+        assert seller not in period.actors
+        assert buyer not in period.actors
+      end
     end
   end
 
   describe "WTB/WTA" do
     test "a buyer cannot offer a price greater than their WTB", %{market: market, buyer: buyer} do
-      {result, message} = market |> Market.update(:buy_at, %{actor: buyer, price: 8.01})
-
-      assert result == :error
+      {:error, message} = market |> Market.update(:buy_at, %{actor: buyer, price: 8.01})
       assert message == :price_not_in_wt
     end
 
@@ -169,13 +160,10 @@ defmodule Ecosim.MarketTest do
       buyer: buyer,
       seller: seller
     } do
-      {result, message} =
-        market
-        |> Market.update(:sell_at, %{actor: seller, price: 8.01})
-        |> Market.update(:accept, %{actor: buyer})
-
-      assert result == :error
-      assert message == :price_not_in_wt
+      with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 8.01}),
+           {:error, message} <- Market.update(market, :accept, %{actor: buyer}) do
+        assert message == :price_not_in_wt
+      end
     end
 
     test "a seller cannot offer a price lesser than their WTA", %{market: market, seller: seller} do
@@ -190,13 +178,10 @@ defmodule Ecosim.MarketTest do
       buyer: buyer,
       seller: seller
     } do
-      {result, message} =
-        market
-        |> Market.update(:buy_at, %{actor: buyer, price: 1.01})
-        |> Market.update(:accept, %{actor: seller})
-
-      assert result == :error
-      assert message == :price_not_in_wt
+      with {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 1.01}),
+           {:error, message} <- Market.update(market, :accept, %{actor: seller}) do
+        assert message == :price_not_in_wt
+      end
     end
   end
 end
