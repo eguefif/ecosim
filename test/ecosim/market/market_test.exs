@@ -6,24 +6,20 @@ defmodule Ecosim.MarketTest do
 
   setup do
     buyer = Actor.new(:buyer, "b1", 8)
+    buyer2 = Actor.new(:buyer, "b2", 8)
 
-    buyers = [
-      buyer,
-      Actor.new(:buyer, "b2", 10)
-    ]
+    buyers = [buyer, buyer2]
 
     seller = Actor.new(:seller, "s1", 3)
+    seller2 = Actor.new(:seller, "s2", 3)
 
-    sellers = [
-      seller,
-      Actor.new(:seller, "s2", 2)
-    ]
+    sellers = [seller, seller2]
 
     market = Market.new(buyers, sellers)
-    [market: market, buyer: buyer, seller: seller]
+    [market: market, buyer: buyer, seller: seller, buyer2: buyer2, seller2: seller2]
   end
 
-  describe "Basic Market action" do
+  describe "Market basic action" do
     test "add a new period on update :add_period", %{market: market} do
       {:ok, market} = Market.update(market, :add_period)
       assert length(market.periods) == 2
@@ -181,6 +177,67 @@ defmodule Ecosim.MarketTest do
       with {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 1.01}),
            {:error, message} <- Market.update(market, :accept, %{actor: seller}) do
         assert message == :price_not_in_wt
+      end
+    end
+  end
+
+  describe "Complete simulation test" do
+    test "That multiple actors make transactions", %{
+      market: market,
+      buyer: buyer,
+      seller: seller,
+      buyer2: buyer2,
+      seller2: seller2
+    } do
+      market =
+        with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 6}),
+             {:ok, market} <- Market.update(market, :sell_at, %{actor: seller2, price: 5}),
+             {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 3}),
+             {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer2, price: 2}),
+             {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer, price: 5}),
+             {:ok, market} <- Market.update(market, :accept, %{actor: seller}) do
+          period = market.periods |> List.first()
+          assert seller2 in period.actors
+          assert buyer2 in period.actors
+          assert seller not in period.actors
+          assert buyer not in period.actors
+          [action] = period.actions |> Enum.filter(&(&1.action == :transact))
+          assert action.action == :transact
+          %{actors: actors, price: price} = action.params
+          assert seller in actors
+          assert buyer in actors
+          assert price == 5
+
+          market
+        end
+
+      market =
+        with {:ok, market} <- Market.update(market, :accept, %{actor: buyer2}) do
+          period = market.periods |> List.last()
+          actions = period.actions |> Enum.filter(&(&1.action == :transact))
+
+          assert length(actions) == 1
+
+          market
+        end
+
+      with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller2, price: 5}),
+           {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer2, price: 2}),
+           {:ok, market} <- Market.update(market, :sell_at, %{actor: seller2, price: 4}),
+           {:ok, market} <- Market.update(market, :accept, %{actor: buyer2}) do
+        period = market.periods |> List.first()
+        assert seller2 not in period.actors
+        assert buyer2 not in period.actors
+
+        actions = period.actions |> Enum.filter(&(&1.action == :transact))
+        assert length(actions) == 2
+
+        last_action = actions |> List.last()
+        assert last_action.action == :transact
+        %{actors: actors, price: price} = last_action.params
+        assert seller2 in actors
+        assert buyer2 in actors
+        assert price == 4
       end
     end
   end

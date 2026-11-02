@@ -1,14 +1,28 @@
 defmodule Ecosim.Market.Action do
+  @moduledoc """
+  An action is made in a Market's period. There are three types:
+  - :sell_at `t:offer_params/0`
+  - :buy_at `t:offer_params/0`
+  - :accept `t:accept_params/0`
+
+  """
   defstruct [:action, params: %{}]
 
   alias Ecosim.Market.Actor
 
   @type t() :: %__MODULE__{
-          action: atom(),
+          action: :buy_at | :sell_at | :accept,
           params: map()
         }
 
-  @spec new(:accept, map()) :: t()
+  @type offer_params() :: %{actor: Actor.t(), price: number()}
+  @type accept_params() :: %{actors: [Actor.t()], price: number()}
+
+  @doc """
+  Create a new actions from an action name and params.
+  """
+  @spec new(:accept, accept_params()) :: t()
+  @spec new(:sell_at | :buy_at, offer_params()) :: t()
   def new(:accept, params) do
     %__MODULE__{
       action: :transact,
@@ -16,14 +30,16 @@ defmodule Ecosim.Market.Action do
     }
   end
 
-  @spec new(atom(), map()) :: t()
-  def new(action, params) do
+  def new(action, params) when action in [:sell_at, :buy_at] do
     %__MODULE__{
       action: action,
       params: params
     }
   end
 
+  @doc """
+  Returns the Action actors.
+  """
   @spec get_actor(t()) :: Actor.t()
   def get_actor(%__MODULE__{} = action) do
     Map.get(action.params, :actor)
