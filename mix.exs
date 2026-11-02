@@ -40,6 +40,7 @@ defmodule Ecosim.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:dialyxir, "~>1.4", only: [:dev, :test], runtime: false},
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.8.8"},
       {:phoenix_ecto, "~> 4.5"},

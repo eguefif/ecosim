@@ -32,8 +32,6 @@ defmodule Ecosim.Market do
         }
 
   @type action() :: :add_period | :buy_at | :sell_at | :accept
-  @type offer_params() :: %{actor: Actor.t(), price: number()}
-  @type accept_params() :: %{actor: Actor.t()}
 
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
@@ -52,7 +50,7 @@ defmodule Ecosim.Market do
   @doc """
   Update the market according to the action and params.
   Possible actions `t:action/0`:
-  - :add_period: create a new period with the list of actos: buyers ++ sellers
+  - :add_period: create a new period with the list of actors: buyers ++ sellers
   - :buy_at
   - :sell_at
   - :accept
@@ -76,9 +74,10 @@ defmodule Ecosim.Market do
   - :price_not_in_wt: means that for a buyer, price is above WTB, for a seller
                       price is below WTA.
   """
-  @spec update(t(), :add_period, nil) :: {:ok, t()}
-  @spec update(t(), :accept, accept_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
-  @spec update(t(), :buy_at | :sell_at, offer_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
+  @spec update(t(), :add_period) :: {:ok, t()}
+  @spec update(t(), :accept, Action.accept_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
+  @spec update(t(), :buy_at | :sell_at, Action.offer_params()) ::
+          {:ok, t()} | {:error, :price_not_in_wt}
   def update(%__MODULE__{} = market, :add_period) do
     {:ok,
      %__MODULE__{

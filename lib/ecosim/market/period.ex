@@ -1,6 +1,9 @@
 defmodule Ecosim.Market.Period do
   @moduledoc """
-  A period gather several actions.
+  A period gathers several actions. It's part of a Market simulation.
+  Think of a period as a day.
+  There is a list of actors. Each time a transaction is made by two actors, they
+  are removed from the period's actor list.
   """
   alias Ecosim.Market.Action
   alias Ecosim.Market.Actor
@@ -18,13 +21,18 @@ defmodule Ecosim.Market.Period do
   end
 
   @doc """
-  Add an action to the list of actions.
+  Add an action to the list of actions when actors are in the list.
+  If actors are not in the list, it returns the period as it was.
 
   An action can be:
-  - :buy_at
-  - :sell_at
-  - :accept
+  - :buy_at `t:offer_params/0`
+  - :sell_at `t:offer_params/0`
+  - :accept `t:accept_params/0`
+
+  Note that accept action generates a :transact actions between two actors.
   """
+  @spec add_action(t(), :accept, Action.accept_params()) :: t()
+  @spec add_action(t(), :buy_at | :sell_at, Action.offer_params()) :: t()
   def add_action(%__MODULE__{} = period, :accept, %{actors: [actor1, actor2]} = params) do
     if actor1 in period.actors && actor2 in period.actors do
       action = Action.new(:accept, params)
@@ -61,21 +69,21 @@ defmodule Ecosim.Market.Period do
   end
 
   @doc """
-  Get the last offer made by an acton from the given list.
+  Return the most recent actions since last transaction when actor is active.
   """
   @spec get_last_offer_from(t(), [Actor.t()]) :: Action.t() | :none
   def get_last_offer_from(%__MODULE__{} = period, actors) do
-    offer =
-      period.actions
-      |> Enum.filter(&is_actor_in_list(&1, actors))
-      |> List.last()
+    actor_list = period.actors |> Enum.filter(&(&1 in actors))
 
-    if is_nil(offer), do: :none, else: offer
+    period.actions
+    |> Enum.reverse()
+    |> Enum.take_while(&(&1.action != :transact))
+    |> Enum.find(:none, &actor_in_list?(&1, actor_list))
   end
 
-  defp is_actor_in_list(actor_name, actor_list) do
-    actor = Action.get_actor(actor_name)
-    actor_list = Enum.map(actor_list, fn actor -> actor.name end)
-    actor.name in actor_list
+  @spec actor_in_list?(Action.t(), [Actor.t()]) :: boolean()
+  defp actor_in_list?(action, actor_list) when action.action != :transact do
+    actor = Action.get_actor(action)
+    actor in actor_list
   end
 end
