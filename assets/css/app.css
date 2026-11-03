@@ -29,6 +29,9 @@
   default: false;
   prefersdark: true;
   color-scheme: "dark";
+  --buyer: oklch(38% 0.07 235);
+  --seller: oklch(38% 0.07 40);
+  --transaction: oklch(38% 0.07 150);
   --color-base-100: oklch(28.822% 0.022 277.508);
   --color-base-200: oklch(26.805% 0.02 277.508);
   --color-base-300: oklch(24.787% 0.019 277.508);
@@ -64,6 +67,9 @@
   default: true;
   prefersdark: false;
   color-scheme: "light";
+  --buyer: oklch(86% 0.05 230);
+  --seller: oklch(86% 0.06 45);
+  --transaction: oklch(86% 0.06 150);
   --color-base-100: oklch(91.637% 0.034 90.515);
   --color-base-200: oklch(88.272% 0.049 91.774);
   --color-base-300: oklch(84.133% 0.065 90.856);
@@ -92,6 +98,14 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
+}
+
+/* Register buyer/seller/transaction as Tailwind colors (bg-buyer, text-seller, ...).
+   Values come from the daisyUI themes above, so they follow light/dark mode. */
+@theme inline {
+  --color-buyer: var(--buyer);
+  --color-seller: var(--seller);
+  --color-transaction: var(--transaction);
 }
 
 /* Add variants based on LiveView classes */

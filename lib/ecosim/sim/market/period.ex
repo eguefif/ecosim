@@ -1,12 +1,13 @@
-defmodule Ecosim.Market.Period do
+defmodule Ecosim.Sim.Market.Period do
   @moduledoc """
   A period gathers several actions. It's part of a Market simulation.
   Think of a period as a day.
   There is a list of actors. Each time a transaction is made by two actors, they
   are removed from the period's actor list.
   """
-  alias Ecosim.Market.Action
-  alias Ecosim.Market.Actor
+  alias Ecosim.Sim.Market
+  alias Ecosim.Sim.Market.Action
+  alias Ecosim.Sim.Market.Actor
 
   defstruct [:actors, actions: []]
 
@@ -15,9 +16,59 @@ defmodule Ecosim.Market.Period do
           actors: [Actor.t()]
         }
 
+  @type period_info() :: %{
+          last_seller_price: Market.price() | :none,
+          last_buyer_price: Market.price() | :none,
+          transactions: [Action.t()],
+          events: [Action.t()]
+        }
+
   @spec new([Actor.t()]) :: t()
   def new(actors) do
     %__MODULE__{actions: [], actors: actors}
+  end
+
+  @doc """
+  Return information regarding the period.
+  """
+  @spec info(t()) :: period_info()
+  def info(%__MODULE__{} = period) do
+    %{
+      last_seller_price: last_seller_price(period),
+      last_buyer_price: last_buyer_price(period),
+      transactions: transactions(period),
+      events: events(period)
+    }
+  end
+
+  @spec events(t()) :: [Action.t()]
+  defp events(%__MODULE__{} = period) do
+    period.actions
+  end
+
+  @spec transactions(t()) :: [Action.t()]
+  defp transactions(%__MODULE__{} = period) do
+    period.actions |> Enum.filter(&Action.is_transaction/1)
+  end
+
+  @spec last_buyer_price(t()) :: Market.price() | :none
+  defp last_buyer_price(%__MODULE__{} = period) do
+    buyers = Enum.filter(period.actors, &(&1.type == :buyer))
+
+    case get_last_offer_from(period, buyers) do
+      :none -> :none
+      action -> Map.get(action.params, :price)
+    end
+  end
+
+  @spec last_seller_price(t()) :: Market.price() | :none
+  defp last_seller_price(%__MODULE__{} = period) do
+    sellers = Enum.filter(period.actors, &(&1.type == :seller))
+
+    case get_last_offer_from(period, sellers) do
+      :none -> :none
+      action -> Map.get(action.params, :price)
+    end
   end
 
   @doc """
