@@ -1,8 +1,8 @@
 defmodule Ecosim.MarketTest do
   use Ecosim.DataCase
 
-  alias Ecosim.Market
-  alias Ecosim.Market.Actor
+  alias Ecosim.Sim.Market
+  alias Ecosim.Sim.Market.Actor
 
   setup do
     buyer = Actor.new(:buyer, "b1", 8)

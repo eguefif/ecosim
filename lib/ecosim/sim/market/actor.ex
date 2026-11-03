@@ -1,4 +1,4 @@
-defmodule Ecosim.Market.Actor do
+defmodule Ecosim.Sim.Market.Actor do
   @moduledoc """
   An actor in the Market is of two type: buyer or seller and has a name.
 
@@ -6,6 +6,8 @@ defmodule Ecosim.Market.Actor do
   The buyer has a wtb: willingness to buy a product at a maximum price.
   The seller has a wta: willingness to accept a price to sell a product.
   """
+
+  alias Ecosim.Sim.Market
 
   defstruct [:type, :name, :wt]
 
@@ -15,7 +17,7 @@ defmodule Ecosim.Market.Actor do
           wt: float()
         }
 
-  @spec new(:buyer | :seller, String.t(), float()) :: t()
+  @spec new(:buyer | :seller, String.t(), Market.price()) :: t()
   def new(type, name, wt) do
     %__MODULE__{
       type: type,

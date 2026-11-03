@@ -1,4 +1,4 @@
-defmodule Ecosim.Market do
+defmodule Ecosim.Sim.Market do
   @moduledoc """
   This is the Market simulation. It uses the Vernon Smith protocol
   describeb in `An Experimental Study of Competitive Market Behavior - 1962`.
@@ -21,9 +21,9 @@ defmodule Ecosim.Market do
   """
   defstruct buyers: [], sellers: [], periods: []
 
-  alias Ecosim.Market.Period
-  alias Ecosim.Market.Action
-  alias Ecosim.Market.Actor
+  alias Ecosim.Sim.Market.Period
+  alias Ecosim.Sim.Market.Action
+  alias Ecosim.Sim.Market.Actor
 
   @type t() :: %__MODULE__{
           buyers: [Actor.t()],
@@ -33,10 +33,14 @@ defmodule Ecosim.Market do
 
   @type action() :: :add_period | :buy_at | :sell_at | :accept
 
+  @type buyers() :: [Actor.t()]
+  @type sellers() :: [Actor.t()]
+  @type price() :: number()
+
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
   """
-  @spec new([Actor.t()], [Actor.t()]) :: t()
+  @spec new(buyers(), sellers()) :: t()
   def new(buyers, sellers) do
     period = Period.new(buyers ++ sellers)
 
@@ -45,6 +49,14 @@ defmodule Ecosim.Market do
       sellers: sellers,
       periods: [period]
     }
+  end
+
+  @doc """
+  Create a new Market from the buyers and sellers from another market
+  """
+  @spec new(t()) :: t()
+  def new(%__MODULE__{sellers: sellers, buyers: buyers} = _) do
+    new(buyers, sellers)
   end
 
   @doc """
