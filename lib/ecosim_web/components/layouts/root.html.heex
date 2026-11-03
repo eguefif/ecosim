@@ -39,11 +39,18 @@
     </script>
   </head>
   <body>
-    <header class="navbar bg-base-100 shadow-sm">
-      <div class="flex-1">
-        <a class="btn btn-ghost text-xl" href="/">Ecosim</a>
-      </div>
-      <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
+    <header class="navbar bg-base-100 shadow-sm flex flex-row justify-between w-full">
+      <a class="btn btn-ghost text-xl" href="/">Ecosim</a>
+
+      <ul class="menu menu-horizontal relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <li>
+          <.link href={~p"/create-sim"} class="btn btn-ghost">Créer</.link>
+        </li>
+        <li>
+          <.link href={~p"/join-sim"} class="btn btn-ghost">Rejoindre</.link>
+        </li>
+      </ul>
+      <ul class="menu menu-horizontal relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
         <li>
           <.theme_toggle />
         </li>

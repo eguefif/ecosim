@@ -3,21 +3,7 @@
 
 ## TODO
 
-- [ ] Make sure all specs are there
-- [ ] Check the following
-    - [ ] Documentation spec for each modules and functions
-        - [x] Market
-        - [ ] Period
-        - [ ] Action
-        - [ ] Actor
-    - [ ] Handle when there is no more buyer and seller. Terminate the period.
-    - [ ] Error handling
-        - [ ] What if the wt is not respected.
-        - [ ] What if the accept could not find an offer. Do nothing?
-    - [ ] Create an end-to-end test and think of potential error: what error should be handled, what error should crash, what error should be ignored?
-- [ ] ERror check
-    - [ ] buy at should actor should be in buyer's list
-    - [ ] same for seller
+- [ ] Create an end-to-end test and think of potential error: what error should be handled, what error should crash, what error should be ignored?
 
  ### Infra
 
