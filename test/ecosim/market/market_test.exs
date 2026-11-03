@@ -189,6 +189,7 @@ defmodule Ecosim.MarketTest do
       buyer2: buyer2,
       seller2: seller2
     } do
+      # First round of bid
       market =
         with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller, price: 6}),
              {:ok, market} <- Market.update(market, :sell_at, %{actor: seller2, price: 5}),
@@ -211,6 +212,7 @@ defmodule Ecosim.MarketTest do
           market
         end
 
+      # Test if an accept is made right after a transaction, it does nothing
       market =
         with {:ok, market} <- Market.update(market, :accept, %{actor: buyer2}) do
           period = market.periods |> List.last()
@@ -221,6 +223,7 @@ defmodule Ecosim.MarketTest do
           market
         end
 
+      # Second round of bid
       with {:ok, market} <- Market.update(market, :sell_at, %{actor: seller2, price: 5}),
            {:ok, market} <- Market.update(market, :buy_at, %{actor: buyer2, price: 2}),
            {:ok, market} <- Market.update(market, :sell_at, %{actor: seller2, price: 4}),

@@ -5,18 +5,18 @@ defmodule EcosimWeb.HomeLive do
   def render(assigns) do
     ~H"""
     <div class="h-screen">
-      <div class="flex flex-col md:flex-row gap-[32px] w-[196px] h-[196px] mx-auto">
+      <div class="flex flex-col md:flex-row gap-[32px] justify-center">
         <a
           href={~p"/create-sim"}
-          class="container shadow-md p-[64px] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200"
+          class="container shadow-md p-[64px] w-[256] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200 text-center"
         >
-          {gettext("New simulation")}
+          Créer une simulation
         </a>
         <a
           href={~p"/join-sim"}
-          class="container shadow-md p-[64px] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200"
+          class="container shadow-md p-[64px] w-[256] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200 text-center"
         >
-          {gettext("Join simulation")}
+          Rejoindre une simulation
         </a>
       </div>
     </div>
