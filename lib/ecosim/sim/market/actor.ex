@@ -14,7 +14,7 @@ defmodule Ecosim.Sim.Market.Actor do
   @type t() :: %__MODULE__{
           type: :buyer | :seller,
           name: String.t(),
-          wt: float()
+          wt: number()
         }
 
   @spec new(:buyer | :seller, String.t(), Market.price()) :: t()
@@ -29,12 +29,12 @@ defmodule Ecosim.Sim.Market.Actor do
   @doc """
   Return true if the price is consistent with actor's WT.
   """
-  @spec price_regarding_wt?(t(), float()) :: boolean
-  def price_regarding_wt?(%__MODULE__{} = actor, price) do
+  @spec price_regarding_wt?(t(), number()) :: boolean()
+  def price_regarding_wt?(%__MODULE__{wt: wt} = actor, price) do
     if actor.type == :buyer do
-      price <= actor.wt
+      price <= wt
     else
-      price >= actor.wt
+      price >= wt
     end
   end
 end

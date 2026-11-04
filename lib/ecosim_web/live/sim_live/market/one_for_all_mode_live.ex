@@ -132,14 +132,35 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
 
   def sim(assigns) do
     ~H"""
-    <div class="flex flex-col gap-[16px]">
+    <div class="flex flex-col gap-[32px]">
       <div class="flex flex-row gap-[16px] self-center">
         <div class="btn btn-primary" phx-click="back-to-preparation">Retour</div>
         <div class="btn btn-warning" phx-click="restart-sim">Recommencer</div>
         <div class="btn btn-primary" phx-click="finish-sim">Finir</div>
       </div>
       <.show_periods periods={length(@market.periods)} />
+      <.show_add_action_form participants={@market.buyers ++ @market.sellers} />
       <.show_current_period info={Enum.at(@market.periods, @period_index) |> Period.info()} />
+    </div>
+    """
+  end
+
+  attr :participants, :list
+
+  def show_add_action_form(assigns) do
+    ~H"""
+    <div class="shadow-md p-[16px] flex justify-center">
+      <form id="one-for-all-add-action-form" phx-submit="add-action">
+        <div class="flex flex-row gap-[8px]">
+          <.live_component
+            module={EcosimWeb.SimLive.Market.InputAutocompleteComponent}
+            id="participant-input"
+            participants={@participants}
+          />
+          <input id="price" name="price" type="text" class="input w-[64px]" placeholder="prix" />
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </div>
+      </form>
     </div>
     """
   end

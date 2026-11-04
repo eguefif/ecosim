@@ -106,8 +106,9 @@ defmodule Ecosim.Sim.Market do
     |> add_transaction(market, actor, period)
   end
 
-  def update(%__MODULE__{} = market, action, %{actor: actor, price: price} = params)
-      when action in [:buy_at, :sell_at] do
+  def update(%__MODULE__{} = market, :offer, %{actor: actor, price: price} = params) do
+    action = get_specific_action(market, actor)
+
     if Actor.price_regarding_wt?(actor, price) do
       {:ok,
        %{
@@ -120,6 +121,11 @@ defmodule Ecosim.Sim.Market do
     else
       {:error, :price_not_in_wt}
     end
+  end
+
+  @spec get_specific_action(t(), Actor.t()) :: :sell_at | :buy_at
+  defp get_specific_action(%__MODULE__{} = market, actor) do
+    if actor in market.buyers, do: :buy_at, else: :sell_at
   end
 
   @spec get_actor_list(t(), Actor.t()) :: [Actor.t()]
@@ -161,5 +167,14 @@ defmodule Ecosim.Sim.Market do
   @spec actions(t()) :: [Action.t()]
   def actions(%__MODULE__{} = market) do
     List.last(market.periods) |> Period.actions()
+  end
+
+  @doc """
+  Retrieve the actor from the name
+  """
+  @spec actor(t(), String.t()) :: Actor.t() | nil
+  def actor(%__MODULE__{} = market, actor_name) do
+    (market.buyers ++ market.sellers)
+    |> Enum.find(&(&1.name == actor_name))
   end
 end
