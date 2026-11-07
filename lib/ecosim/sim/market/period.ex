@@ -72,6 +72,28 @@ defmodule Ecosim.Sim.Market.Period do
   end
 
   @doc """
+  Remove the last action in the action's list.
+  """
+  @spec remove_last_action(t()) :: t()
+  def remove_last_action(%__MODULE__{} = period) do
+    {action, rest} = List.pop_at(period.actions, -1)
+
+    actors =
+      if action.action == :transact do
+        %{actors: actors} = action.params
+        [actor1, actor2] = actors
+        period.actors |> List.insert_at(-1, actor1) |> List.insert_at(-1, actor2)
+      else
+        period.actors
+      end
+
+    %__MODULE__{
+      actions: rest,
+      actors: actors
+    }
+  end
+
+  @doc """
   Add an action to the list of actions when actors are in the list.
   If actors are not in the list, it returns the period as it was.
 

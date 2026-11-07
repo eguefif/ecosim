@@ -137,10 +137,14 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
         <div class="btn btn-primary" phx-click="back-to-preparation">Retour</div>
         <div class="btn btn-warning" phx-click="restart-sim">Recommencer</div>
         <div class="btn btn-primary" phx-click="finish-sim">Finir</div>
+        <div class="btn btn-warning" phx-click="undo-last-action">Annuler</div>
       </div>
       <.show_periods periods={length(@market.periods)} />
-      <.show_add_action_form participants={@market.buyers ++ @market.sellers} />
-      <.show_current_period info={Enum.at(@market.periods, @period_index) |> Period.info()} />
+      <.show_add_action_form participants={Market.active_actors(@market)} />
+      <.show_current_period
+        info={Enum.at(@market.periods, @period_index) |> Period.info()}
+        participants={@market.buyers ++ @market.sellers}
+      />
     </div>
     """
   end
@@ -170,91 +174,45 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   def show_periods(assigns) do
     ~H"""
     <div class="flex flex-row gap-[8px]">
+      <.button phx-click="add-period"><.icon name="hero-plus" class="size-5" /></.button>
       <div
         :for={n <- 0..(@periods - 1)}
         class="btn btn-info"
         phx-click="show-period"
         phx-value-period={n}
       >
-        Période {n}
+        Période {n + 1}
       </div>
     </div>
     """
   end
 
   attr :info, :map
+  attr :participants, :list
 
   def show_current_period(assigns) do
     ~H"""
     <div class="flex flex-col gap-[32px]">
       <div class="flex flex-row justify-around w-[640]">
-        <.show_price price={@info.last_seller_price} label="Vendeur" />
-        <.show_price price={@info.last_buyer_price} label="Acheteur" />
+        <.show_price
+          price={@info.last_seller_price}
+          label="Vendeur"
+          participants={@participants |> Enum.filter(&(&1.type == :buyer))}
+        />
+        <.show_price
+          price={@info.last_buyer_price}
+          label="Acheteur"
+          participants={
+            @participants
+            |> Enum.filter(&(&1.type == :seller))
+          }
+        />
       </div>
       <div class="divider"></div>
       <div class="flex flex-row gap-[64px] justify-between w-[640]">
-        <.show_actions
-          actions={@info.transactions}
-          label="Transactions"
-          row_item={
-            fn action ->
-              actors = Map.get(action.params, :actors)
-              price = Map.get(action.params, :price)
-              [Enum.at(actors, 0), Enum.at(actors, 1), price]
-            end
-          }
-        >
-          <:action_row :let={[actor1, actor2, price]}>
-            <div class="shadow-md p-[16px] rounded-lg text-center bg-transaction" ,>
-              <span class="font-bold">{actor1.name}</span>
-              vend à <span class="font-bold">{actor2.name}</span>
-              aux prix de <span class="font-bold">{price}</span>
-            </div>
-          </:action_row>
-        </.show_actions>
+        <.show_transactions info={@info} />
         <div class="divider divider-horizontal"></div>
-        <.show_actions
-          actions={@info.events}
-          label="Événements"
-          row_item={
-            fn action ->
-              if action.action == :transact do
-                actor1 = Map.get(action.params, :actors) |> Enum.at(0)
-                actor2 = Map.get(action.params, :actors) |> Enum.at(1)
-                price = Map.get(action.params, :price)
-                [Enum.join([actor1.name, actor2.name], " et "), :transact, price]
-              else
-                actor = Map.get(action.params, :actor)
-                price = Map.get(action.params, :price)
-                [actor, action.action, price]
-              end
-            end
-          }
-        >
-          <:action_row :let={[actor, action_type, price]}>
-            <div
-              :if={action_type == :transact}
-              class={[
-                "shadow-md p-[16px] rounded-lg text-center",
-                "bg-transaction"
-              ]}
-            >
-              Transaction entre <span class="font-bold">{actor}</span>
-              à <span class="font-bold">{price}</span>
-            </div>
-            <div
-              :if={action_type != :transact}
-              class={[
-                "shadow-md p-[16px] rounded-lg text-center",
-                action_type == :sell_at && "bg-seller",
-                action_type == :buy_at && "bg-buyer"
-              ]}
-            >
-              <span class="font-bold">{actor.name}</span> {action_to_string(action_type)} à
-              <span class="font-bold">{price}</span>
-            </div>
-          </:action_row>
-        </.show_actions>
+        <.show_all_actions info={@info} />
       </div>
     </div>
     """
@@ -265,18 +223,111 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
 
   attr :label, :string
   attr :price, :any
+  attr :participants, :list
 
   def show_price(assigns) do
     ~H"""
     <div class="card card-lg shadow-md w-[192px]">
-      <div class="card-body items-center">
+      <div class="card-body items-center flex flex-col gap-[8px]">
         <div class="card-title">{@label}</div>
         <p>
-          <div :if={@price != :none}>{@price}</div>
+          <div :if={@price != :none}>
+            {@price}
+          </div>
           <div :if={@price == :none}>Pas de prix</div>
+          <.form
+            id={"accept-#{@label}"}
+            for={}
+            phx-submit="accept-price"
+          >
+            <.input
+              type="select"
+              name={"participants-input-#{@label |> String.downcase()}"}
+              value=""
+              id={"participants-input-#{@label}"}
+              options={@participants |> Enum.map(& &1.name)}
+              disabled={@price == :none}
+            />
+            <button type="submit" class="btn btn-primary" disabled={@price == :none}>Accepter prix</button>
+          </.form>
         </p>
       </div>
     </div>
+    """
+  end
+
+  attr :info, :map
+
+  def show_transactions(assigns) do
+    ~H"""
+    <.show_actions
+      actions={@info.transactions |> Enum.reverse()}
+      label="Transactions"
+      row_item={
+        fn action ->
+          actors = Map.get(action.params, :actors)
+          price = Map.get(action.params, :price)
+          [Enum.at(actors, 0), Enum.at(actors, 1), price]
+        end
+      }
+    >
+      <:action_row :let={[actor1, actor2, price]}>
+        <div class="shadow-md p-[16px] rounded-lg text-center bg-transaction" ,>
+          <span class="font-bold">{actor1.name}</span>
+          vend à <span class="font-bold">{actor2.name}</span>
+          aux prix de <span class="font-bold">{price}</span>
+        </div>
+      </:action_row>
+    </.show_actions>
+    """
+  end
+
+  attr :info, :map
+
+  def show_all_actions(assigns) do
+    ~H"""
+    <.show_actions
+      actions={@info.events |> Enum.reverse()}
+      label="Événements"
+      row_item={
+        fn action ->
+          if action.action == :transact do
+            actor1 = Map.get(action.params, :actors) |> Enum.at(0)
+            actor2 = Map.get(action.params, :actors) |> Enum.at(1)
+            price = Map.get(action.params, :price)
+            [Enum.join([actor1.name, actor2.name], " et "), :transact, price]
+          else
+            actor = Map.get(action.params, :actor)
+            price = Map.get(action.params, :price)
+            [actor, action.action, price]
+          end
+        end
+      }
+    >
+      <:action_row :let={[actor, action_type, price]}>
+        <div
+          :if={action_type == :transact}
+          class={[
+            "shadow-md p-[16px] rounded-lg text-center",
+            "bg-transaction"
+          ]}
+        >
+          Transaction entre <span class="font-bold">{actor}</span>
+          à <span class="font-bold">{price}</span>
+        </div>
+        <div
+          :if={action_type != :transact}
+          class={[
+            "shadow-md p-[16px] rounded-lg text-center",
+            action_type == :sell_at && "bg-seller",
+            action_type == :buy_at && "bg-buyer"
+          ]}
+        >
+          <span class="font-bold">{actor.name}</span> {action_to_string(action_type)} à
+          <span class="font-bold">{price}</span>
+        </div>
+      </:action_row>
+    </.show_actions>
     """
   end
 
