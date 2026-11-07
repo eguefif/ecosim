@@ -142,6 +142,51 @@ defmodule EcosimWeb.Sim.MarketLive do
     end
   end
 
+  def handle_event(
+        "accept-price",
+        %{"participants-input-vendeur" => actor},
+        socket
+      ) do
+    market = socket.assigns.market
+    actor = Market.actor(market, actor)
+
+    case Market.update(market, :accept, %{actor: actor}) do
+      {:ok, market} ->
+        {:noreply, socket |> assign(:market, market)}
+
+      {:error, error} ->
+        IO.inspect(error)
+        {:noreply, socket |> put_flash(:error, "Erreur")}
+    end
+  end
+
+  def handle_event(
+        "accept-price",
+        %{"participants-input-buyer" => actor},
+        socket
+      ) do
+    market = socket.assigns.market
+    actor = Market.actor(market, actor)
+
+    case Market.update(market, :accept, %{actor: actor}) do
+      {:ok, market} ->
+        {:noreply, socket |> assign(:market, market)}
+
+      {:error, error} ->
+        IO.inspect(error)
+        {:noreply, socket |> put_flash(:error, "Erreur")}
+    end
+  end
+
+  def handle_event("undo-last-action", %{}, socket) do
+    {:noreply, assign(socket, :market, Market.undo(socket.assigns.market))}
+  end
+
+  def handle_event("add-period", %{}, socket) do
+    {:ok, market} = Market.update(socket.assigns.market, :add_period)
+    {:noreply, assign(socket, :market, market)}
+  end
+
   def handle_event("show-day", %{"period" => period}, socket) do
     {:noreply, assign(socket, :period_index, period)}
   end

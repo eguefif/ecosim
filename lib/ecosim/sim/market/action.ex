@@ -16,7 +16,7 @@ defmodule Ecosim.Sim.Market.Action do
         }
 
   @type offer_params() :: %{actor: Actor.t(), price: number()}
-  @type accept_params() :: %{actors: [Actor.t()], price: number()}
+  @type accept_params() :: %{actors: [Actor.t()]}
 
   @doc """
   Create a new actions from an action name and params.

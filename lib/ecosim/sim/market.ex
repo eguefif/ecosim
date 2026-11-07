@@ -88,7 +88,7 @@ defmodule Ecosim.Sim.Market do
   """
   @spec update(t(), :add_period) :: {:ok, t()}
   @spec update(t(), :accept, Action.accept_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
-  @spec update(t(), :buy_at | :sell_at, Action.offer_params()) ::
+  @spec update(t(), :offer, Action.offer_params()) ::
           {:ok, t()} | {:error, :price_not_in_wt}
   def update(%__MODULE__{} = market, :add_period) do
     {:ok,
@@ -176,5 +176,24 @@ defmodule Ecosim.Sim.Market do
   def actor(%__MODULE__{} = market, actor_name) do
     (market.buyers ++ market.sellers)
     |> Enum.find(&(&1.name == actor_name))
+  end
+
+  @doc """
+  Remove the last action.
+  """
+  @spec undo(t()) :: t()
+  def undo(%__MODULE__{} = market) do
+    periods =
+      List.update_at(market.periods, -1, fn period ->
+        period |> Period.remove_last_action()
+      end)
+
+    %{market | periods: periods}
+  end
+
+  def active_actors(%__MODULE__{} = market) do
+    period = Enum.at(market.periods, -1)
+    actors = market.sellers ++ market.buyers
+    Enum.filter(actors, fn actor -> actor in period.actors end)
   end
 end

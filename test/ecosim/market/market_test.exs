@@ -244,4 +244,39 @@ defmodule Ecosim.MarketTest do
       end
     end
   end
+
+  describe "undo/1" do
+    test "removes the last offer on period 2", %{market: market, seller: seller, buyer: buyer} do
+      {:ok, market} = Market.update(market, :add_period)
+      {:ok, market} = Market.update(market, :offer, %{actor: seller, price: 5})
+      {:ok, market} = Market.update(market, :offer, %{actor: buyer, price: 2})
+
+      market = Market.undo(market)
+      [_, period] = market.periods
+
+      assert length(period.actions) == 1
+      assert length(period.actors) == 4
+    end
+
+    test "removes the last transaction on period 2", %{
+      market: market,
+      seller: seller,
+      buyer: buyer
+    } do
+      {:ok, market} = Market.update(market, :add_period)
+      {:ok, market} = Market.update(market, :offer, %{actor: seller, price: 5})
+      {:ok, market} = Market.update(market, :offer, %{actor: buyer, price: 8})
+      {:ok, market} = Market.update(market, :accept, %{actor: seller})
+      [_, period] = market.periods
+
+      assert length(period.actions) == 3
+      assert length(period.actors) == 2
+
+      market = Market.undo(market)
+      [_, period] = market.periods
+
+      assert length(period.actions) == 2
+      assert length(period.actors) == 4
+    end
+  end
 end
