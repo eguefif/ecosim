@@ -88,7 +88,8 @@ defmodule Ecosim.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:ex_doc, "~>0.40.4", only: [:dev], runtime: false}
+      {:ex_doc, "~>0.40.4", only: [:dev], runtime: false},
+      {:contex, "~> 0.5.0"},
     ]
   end
 

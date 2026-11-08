@@ -6,16 +6,16 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
     ~H"""
     <div>
       <input
-        id="participant-input"
-        name="participant-input"
+        id="actor-input"
+        name="actor-input"
         type="text"
         class="input w-[196px]"
-        placeholder="participant"
+        placeholder="actor"
         phx-change="user-change-input"
         phx-target={@myself}
         value={@selected_value}
       />
-      <input type="hidden" value={@selected_value} name="participant" />
+      <input type="hidden" value={@selected_value} name="actor" />
       <div :if={@show_entries == true} class="static">
         <ul
           class="list bg-base-200 shadow-md w-[196px] absolute z-10 isolate"
@@ -47,9 +47,9 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
   end
 
   @impl true
-  def handle_event("user-change-input", %{"participant-input" => value}, socket) do
+  def handle_event("user-change-input", %{"actor-input" => value}, socket) do
     entries =
-      socket.assigns.participants
+      socket.assigns.actors
       |> Enum.map(& &1.name)
       |> Enum.map(&{String.jaro_distance(&1, value), &1})
       |> Enum.sort(fn {jaro1, _}, {jaro2, _} ->
