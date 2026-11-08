@@ -17,6 +17,8 @@ defmodule Ecosim.Sim.Market.Actor do
           wt: number()
         }
 
+  @type new_params :: [String.t()]
+
   @spec new(:buyer | :seller, String.t(), Market.price()) :: t()
   def new(type, name, wt) do
     %__MODULE__{
@@ -24,6 +26,25 @@ defmodule Ecosim.Sim.Market.Actor do
       name: name,
       wt: wt
     }
+  end
+
+  @spec new(new_params()) :: t()
+  def new(params) do
+    [type, name, wt] = params
+
+    %__MODULE__{
+      type: type |> type_string_to_atom(),
+      name: name,
+      wt: wt |> Float.parse() |> elem(0)
+    }
+  end
+
+  @spec type_string_to_atom(String.t()) :: atom()
+  defp type_string_to_atom(type) do
+    case type do
+      "acheteur" -> :buyer
+      "vendeur" -> :seller
+    end
   end
 
   @doc """
