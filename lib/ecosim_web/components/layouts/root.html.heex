@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang={Gettext.get_locale(EcosimWeb.Gettext)}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -44,13 +44,16 @@
 
       <ul class="menu menu-horizontal relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
         <li>
-          <.link href={~p"/create-sim"} class="btn btn-ghost">Créer</.link>
+          <.link href={~p"/create-sim"} class="btn btn-ghost">{gettext("Create")}</.link>
         </li>
         <li>
-          <.link href={~p"/join-sim"} class="btn btn-ghost">Rejoindre</.link>
+          <.link href={~p"/join-sim"} class="btn btn-ghost">{gettext("Join")}</.link>
         </li>
       </ul>
       <ul class="menu menu-horizontal relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <li>
+          <.locale_toggle />
+        </li>
         <li>
           <.theme_toggle />
         </li>
@@ -60,17 +63,17 @@
             {@current_scope.user.email}
           </li>
           <li>
-            <.link href={~p"/users/settings"}>Settings</.link>
+            <.link href={~p"/users/settings"}>{gettext("Settings")}</.link>
           </li>
           <li>
-            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+            <.link href={~p"/users/log-out"} method="delete">{gettext("Log out")}</.link>
           </li>
         <% else %>
           <li>
-            <.link href={~p"/users/register"}>Register</.link>
+            <.link href={~p"/users/register"}>{gettext("Register")}</.link>
           </li>
           <li>
-            <.link href={~p"/users/log-in"}>Log in</.link>
+            <.link href={~p"/users/log-in"}>{gettext("Log in")}</.link>
           </li>
         <% end %>
         -->

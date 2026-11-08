@@ -11,10 +11,10 @@ defmodule EcosimWeb.Sim.MarketLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
-        Market - ({get_mode(@mode)})
-        <:subtitle :if={@step == :preparation}>1 - Préparation</:subtitle>
-        <:subtitle :if={@step == :sim}>2 - Simulation</:subtitle>
-        <:subtitle :if={@step == :result}>3 - Result</:subtitle>
+        {gettext("Market")} - ({get_mode(@mode)})
+        <:subtitle :if={@step == :preparation}>{gettext("1 - Preparation")}</:subtitle>
+        <:subtitle :if={@step == :sim}>{gettext("2 - Simulation")}</:subtitle>
+        <:subtitle :if={@step == :result}>{gettext("3 - Results")}</:subtitle>
       </.header>
 
       <CommonLive.preparation
@@ -31,9 +31,9 @@ defmodule EcosimWeb.Sim.MarketLive do
     """
   end
 
-  defp get_mode("one-for-all"), do: "Un utilisateur pour tous"
-  defp get_mode("bot"), do: "Utilisateur avec bot"
-  defp get_mode("multi"), do: "Multi utilisateur"
+  defp get_mode("one-for-all"), do: gettext("One user for all")
+  defp get_mode("bot"), do: gettext("One user with bots")
+  defp get_mode("multi"), do: gettext("Multi-user")
 
   @impl true
   def mount(%{"mode" => mode}, _session, socket) do
@@ -95,7 +95,7 @@ defmodule EcosimWeb.Sim.MarketLive do
       Market.results(socket.assigns.market)
       |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
       |> IO.inspect()
-      |> make_graph("Evolution du prix par transaction")
+      |> make_graph(gettext("Price evolution per transaction"))
 
     {:noreply, assign(socket, :step, :result) |> assign(:graph, graph)}
   end
@@ -118,7 +118,7 @@ defmodule EcosimWeb.Sim.MarketLive do
 
     case Market.actor(market, actor) do
       nil ->
-        {:noreply, put_flash(socket, :error, "L'acteur donné n'existe pas.")}
+        {:noreply, put_flash(socket, :error, gettext("The given actor does not exist."))}
 
       actor ->
         case Market.update(market, :offer, %{actor: actor, price: price}) do
@@ -130,7 +130,9 @@ defmodule EcosimWeb.Sim.MarketLive do
              put_flash(
                socket,
                :error,
-               "Le prix donné ne respecte pas le prix de consentement de l'acteur."
+               gettext(
+                 "The given price does not respect the actor's willingness to pay or accept."
+               )
              )}
         end
     end
@@ -138,7 +140,7 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   def handle_event(
         "accept-price",
-        %{"actors-input-vendeur" => actor},
+        %{"actors-input-seller" => actor},
         socket
       ) do
     market = socket.assigns.market
@@ -150,7 +152,7 @@ defmodule EcosimWeb.Sim.MarketLive do
 
       {:error, error} ->
         IO.inspect(error)
-        {:noreply, socket |> put_flash(:error, "Erreur")}
+        {:noreply, socket |> put_flash(:error, gettext("Error"))}
     end
   end
 
@@ -168,7 +170,7 @@ defmodule EcosimWeb.Sim.MarketLive do
 
       {:error, error} ->
         IO.inspect(error)
-        {:noreply, socket |> put_flash(:error, "Erreur")}
+        {:noreply, socket |> put_flash(:error, gettext("Error"))}
     end
   end
 

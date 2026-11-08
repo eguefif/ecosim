@@ -1,0 +1,541 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:350
+#, elixir-autogen, elixir-format
+msgid "%{actor} buys at %{price}"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:346
+#, elixir-autogen, elixir-format
+msgid "%{actor} sells at %{price}"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:328
+#, elixir-autogen, elixir-format
+msgid "%{seller} sells to %{buyer} at the price of %{price}"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:15
+#, elixir-autogen, elixir-format
+msgid "1 - Preparation"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:16
+#, elixir-autogen, elixir-format
+msgid "2 - Simulation"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:17
+#, elixir-autogen, elixir-format
+msgid "3 - Results"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:129
+#, elixir-autogen, elixir-format
+msgid "A link to confirm your email change has been sent to the new address."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:207
+#, elixir-autogen, elixir-format
+msgid "Accept price"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:14
+#, elixir-autogen, elixir-format
+msgid "Account Settings"
+msgstr ""
+
+#: lib/ecosim_web/components/core_components.ex:375
+#, elixir-autogen, elixir-format
+msgid "Actions"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:32
+#, elixir-autogen, elixir-format
+msgid "Actors"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:120
+#, elixir-autogen, elixir-format
+msgid "Add"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/registration.ex:16
+#, elixir-autogen, elixir-format
+msgid "Already registered?"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/registration.ex:71
+#, elixir-autogen, elixir-format
+msgid "An email was sent to %{email}, please access it to confirm your account."
+msgstr ""
+
+#: lib/ecosim_web/components/layouts.ex:75
+#: lib/ecosim_web/components/layouts.ex:90
+#, elixir-autogen, elixir-format
+msgid "Attempting to reconnect"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:86
+#, elixir-autogen, elixir-format
+msgid "Back"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:56
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:161
+#, elixir-autogen, elixir-format
+msgid "Buyer"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:50
+#, elixir-autogen, elixir-format
+msgid "Cancel"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:29
+#, elixir-autogen, elixir-format
+msgid "Change Email"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:28
+#, elixir-autogen, elixir-format
+msgid "Changing..."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:37
+#, elixir-autogen, elixir-format
+msgid "Confirm and log in only this time"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:31
+#, elixir-autogen, elixir-format
+msgid "Confirm and stay logged in"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:62
+#, elixir-autogen, elixir-format
+msgid "Confirm new password"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:28
+#: lib/ecosim_web/live/user_live/confirmation.ex:34
+#, elixir-autogen, elixir-format
+msgid "Confirming..."
+msgstr ""
+
+#: lib/ecosim_web/components/layouts/root.html.heex:47
+#, elixir-autogen, elixir-format
+msgid "Create"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:8
+#: lib/ecosim_web/live/home_live.ex:13
+#, elixir-autogen, elixir-format
+msgid "Create a simulation"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/registration.ex:37
+#, elixir-autogen, elixir-format
+msgid "Create an account"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/registration.ex:36
+#, elixir-autogen, elixir-format
+msgid "Creating account..."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:18
+#, elixir-autogen, elixir-format
+msgid "Don't have an account?"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:39
+#, elixir-autogen, elixir-format
+msgid "Drop your file here or click to select it (.txt, .csv)"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:49
+#: lib/ecosim_web/live/user_live/login.ex:74
+#: lib/ecosim_web/live/user_live/registration.ex:29
+#: lib/ecosim_web/live/user_live/settings.ex:23
+#, elixir-autogen, elixir-format
+msgid "Email"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:82
+#, elixir-autogen, elixir-format
+msgid "Email change link is invalid or it has expired."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:79
+#, elixir-autogen, elixir-format
+msgid "Email changed successfully."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:155
+#: lib/ecosim_web/live/sim_live/market_live.ex:173
+#, elixir-autogen, elixir-format
+msgid "Error"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:364
+#, elixir-autogen, elixir-format
+msgid "Error while uploading."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:246
+#, elixir-autogen, elixir-format
+msgid "Events"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:88
+#, elixir-autogen, elixir-format
+msgid "Finish"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:361
+#, elixir-autogen, elixir-format
+msgid "Format not accepted (.txt or .csv only)."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:123
+#, elixir-autogen, elixir-format
+msgid "If your email is in our system, you will receive instructions for logging in shortly."
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:87
+#, elixir-autogen, elixir-format
+msgid "In this mode, each user uses their own device and joins the simulation with a code."
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:68
+#, elixir-autogen, elixir-format
+msgid "In this mode, one user provides the list of economic actors and records every action."
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:106
+#, elixir-autogen, elixir-format
+msgid "In this mode, one user runs the simulation with bots."
+msgstr ""
+
+#: lib/ecosim_web/components/layouts/root.html.heex:50
+#, elixir-autogen, elixir-format
+msgid "Join"
+msgstr ""
+
+#: lib/ecosim_web/live/home_live.ex:19
+#: lib/ecosim_web/live/join_sim_live.ex:8
+#, elixir-autogen, elixir-format
+msgid "Join a simulation"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:62
+#, elixir-autogen, elixir-format
+msgid "Keep me logged in on this device"
+msgstr ""
+
+#: lib/ecosim_web/components/layouts.ex:152
+#, elixir-autogen, elixir-format
+msgid "Language"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:53
+#: lib/ecosim_web/live/user_live/login.ex:13
+#: lib/ecosim_web/live/user_live/registration.ex:18
+#, elixir-autogen, elixir-format
+msgid "Log in"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:87
+#, elixir-autogen, elixir-format
+msgid "Log in and stay logged in"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:90
+#, elixir-autogen, elixir-format
+msgid "Log in only this time"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:56
+#, elixir-autogen, elixir-format
+msgid "Log in with email"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:68
+#, elixir-autogen, elixir-format
+msgid "Log me in only this time"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:52
+#: lib/ecosim_web/live/user_live/confirmation.ex:59
+#: lib/ecosim_web/live/user_live/confirmation.ex:65
+#, elixir-autogen, elixir-format
+msgid "Logging in..."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:91
+#, elixir-autogen, elixir-format
+msgid "Magic link is invalid or it has expired."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:15
+#, elixir-autogen, elixir-format
+msgid "Manage your account email address and password settings"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:36
+#: lib/ecosim_web/live/sim_live/market_live.ex:14
+#, elixir-autogen, elixir-format
+msgid "Market"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:84
+#: lib/ecosim_web/live/sim_live/market_live.ex:36
+#, elixir-autogen, elixir-format
+msgid "Multi-user"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:54
+#, elixir-autogen, elixir-format
+msgid "New password"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:192
+#, elixir-autogen, elixir-format
+msgid "No price"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:65
+#: lib/ecosim_web/live/sim_live/market_live.ex:34
+#, elixir-autogen, elixir-format
+msgid "One user for all"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:103
+#: lib/ecosim_web/live/sim_live/market_live.ex:35
+#, elixir-autogen, elixir-format
+msgid "One user with bots"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:363
+#, elixir-autogen, elixir-format
+msgid "Only one file is allowed."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:82
+#, elixir-autogen, elixir-format
+msgid "Password"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:139
+#, elixir-autogen, elixir-format
+msgid "Period %{number}"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:98
+#, elixir-autogen, elixir-format
+msgid "Price evolution per transaction"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/registration.ex:14
+#, elixir-autogen, elixir-format
+msgid "Register for an account"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:87
+#, elixir-autogen, elixir-format
+msgid "Restart"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:65
+#, elixir-autogen, elixir-format
+msgid "Results"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:67
+#, elixir-autogen, elixir-format
+msgid "Save Password"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/settings.ex:66
+#, elixir-autogen, elixir-format
+msgid "Saving..."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:55
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:155
+#, elixir-autogen, elixir-format
+msgid "Seller"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:22
+#, elixir-autogen, elixir-format
+msgid "Sign up"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:42
+#, elixir-autogen, elixir-format
+msgid "Simulate a market following Vernon Smith's 1962 protocol."
+msgstr ""
+
+#: lib/ecosim_web/components/layouts.ex:82
+#, elixir-autogen, elixir-format
+msgid "Something went wrong!"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:17
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:22
+#, elixir-autogen, elixir-format
+msgid "Start"
+msgstr ""
+
+#: lib/ecosim_web/live/create_sim_live.ex:40
+#, elixir-autogen, elixir-format
+msgid "The Market"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:358
+#, elixir-autogen, elixir-format
+msgid "The file is too large."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:121
+#, elixir-autogen, elixir-format
+msgid "The given actor does not exist."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market_live.ex:133
+#, elixir-autogen, elixir-format
+msgid "The given price does not respect the actor's willingness to pay or accept."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:12
+#, elixir-autogen, elixir-format
+msgid "This mode requires some preparation. Each of your users must know their role and their willingness to pay or accept (WTP, WTA). Please provide a text or csv file formatted like this:"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:74
+#, elixir-autogen, elixir-format
+msgid "Tip: If you prefer passwords, you can enable them in the user settings."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:33
+#, elixir-autogen, elixir-format
+msgid "To see sent emails, visit"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:337
+#, elixir-autogen, elixir-format
+msgid "Transaction between %{actor1} and %{actor2} at %{price}"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:222
+#, elixir-autogen, elixir-format
+msgid "Transactions"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:89
+#, elixir-autogen, elixir-format
+msgid "Undo"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:72
+#, elixir-autogen, elixir-format
+msgid "Upload"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:19
+#, elixir-autogen, elixir-format
+msgid "WTA = willingness to accept (minimum accepted price)"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:23
+#, elixir-autogen, elixir-format
+msgid "WTP = willingness to pay (maximum accepted price)"
+msgstr ""
+
+#: lib/ecosim_web/components/layouts.ex:67
+#, elixir-autogen, elixir-format
+msgid "We can't find the internet"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/confirmation.ex:12
+#, elixir-autogen, elixir-format
+msgid "Welcome %{email}"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:31
+#, elixir-autogen, elixir-format
+msgid "You are running the local mail adapter."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:16
+#, elixir-autogen, elixir-format
+msgid "You need to reauthenticate to perform sensitive actions on your account."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/input_autocomplete_live.ex:14
+#, elixir-autogen, elixir-format
+msgid "actor"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:311
+#, elixir-autogen, elixir-format
+msgid "buyer"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:22
+#, elixir-autogen, elixir-format
+msgid "buyer, name, WTP"
+msgstr ""
+
+#: lib/ecosim_web/components/core_components.ex:81
+#, elixir-autogen, elixir-format
+msgid "close"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:22
+#, elixir-autogen, elixir-format
+msgid "for an account now."
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:60
+#, elixir-autogen, elixir-format
+msgid "or"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:118
+#, elixir-autogen, elixir-format
+msgid "price"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:310
+#, elixir-autogen, elixir-format
+msgid "seller"
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:18
+#, elixir-autogen, elixir-format
+msgid "seller, name, WTA"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/login.ex:33
+#, elixir-autogen, elixir-format
+msgid "the mailbox page"
+msgstr ""
+
+#: lib/ecosim_web/live/user_live/registration.ex:20
+#, elixir-autogen, elixir-format
+msgid "to your account now."
+msgstr ""

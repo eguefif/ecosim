@@ -5,7 +5,7 @@ defmodule EcosimWeb.JoinSimLive do
   def render(assigns) do
     ~H"""
     <.header>
-      Join Sim
+      {gettext("Join a simulation")}
     </.header>
     """
   end

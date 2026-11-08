@@ -130,4 +130,48 @@ defmodule EcosimWeb.Layouts do
     </div>
     """
   end
+
+  @doc """
+  Provides a language selector (French / English).
+
+  Each option links to the locale controller, which stores the choice in the
+  session and redirects back to the current page.
+  """
+  attr :locale, :string, default: nil
+
+  def locale_toggle(assigns) do
+    assigns =
+      assigns
+      |> assign_new(:current, fn -> assigns.locale || Gettext.get_locale(EcosimWeb.Gettext) end)
+      |> assign(:locales, [{"fr", "FR", "Français"}, {"en", "EN", "English"}])
+
+    ~H"""
+    <div
+      id="locale-toggle"
+      class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full"
+      aria-label={gettext("Language")}
+    >
+      <div class={[
+        "absolute w-1/2 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 transition-[left]",
+        if(@current == "en", do: "left-1/2", else: "left-0")
+      ]} />
+
+      <.link
+        :for={{code, short, name} <- @locales}
+        id={"locale-#{code}"}
+        href={~p"/locale/#{code}"}
+        hreflang={code}
+        lang={code}
+        title={name}
+        aria-current={@current == code && "true"}
+        class={[
+          "relative flex justify-center w-1/2 px-2 py-1 text-xs font-semibold tracking-wide cursor-pointer transition-opacity",
+          if(@current == code, do: "opacity-100", else: "opacity-60 hover:opacity-100")
+        ]}
+      >
+        {short}
+      </.link>
+    </div>
+    """
+  end
 end

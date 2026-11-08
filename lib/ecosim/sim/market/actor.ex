@@ -39,11 +39,16 @@ defmodule Ecosim.Sim.Market.Actor do
     }
   end
 
-  @spec type_string_to_atom(String.t()) :: atom()
-  defp type_string_to_atom(type) do
-    case type do
-      "acheteur" -> :buyer
-      "vendeur" -> :seller
+  @doc """
+  Converts an actor type keyword (French or English, case-insensitive) to its atom.
+  Returns `nil` for an unknown keyword.
+  """
+  @spec type_string_to_atom(String.t()) :: :buyer | :seller | nil
+  def type_string_to_atom(type) do
+    case type |> String.trim() |> String.downcase() do
+      t when t in ["acheteur", "buyer"] -> :buyer
+      t when t in ["vendeur", "seller"] -> :seller
+      _ -> nil
     end
   end
 
