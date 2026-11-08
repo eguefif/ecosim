@@ -2,6 +2,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   use EcosimWeb, :live_view
 
   alias EcosimWeb.SimLive.OneForAllModeLive, as: OneMode
+  alias Ecosim.Sim.Market.Actor
 
   attr :mode, :string
   attr :uploads, :map, required: true
@@ -18,7 +19,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
         class={["btn btn-primary w-[96px] mx-auto", @actors == [] && "btn-disabled"]}
         phx-click="start"
       >
-        Démarrer
+        {gettext("Start")}
       </div>
     </div>
     """
@@ -28,13 +29,13 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
 
   def show_actors(assigns) do
     ~H"""
-    <div class="divider text-xl">actors</div>
+    <div class="divider text-xl">{gettext("Actors")}</div>
     <ul id="actors" class="list gap-[4px]">
       <li
         :for={[type, name, _] <- @actors}
         class={[
-          type == "acheteur" && "bg-buyer",
-          type == "vendeur" && "bg-seller",
+          Actor.type_string_to_atom(type) == :buyer && "bg-buyer",
+          Actor.type_string_to_atom(type) == :seller && "bg-seller",
           "list-row items-baseline flex flex-row justify-between"
         ]}
       >
@@ -49,14 +50,19 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
     """
   end
 
-  defp get_type("vendeur"), do: "Vendeur"
-  defp get_type("acheteur"), do: "Acheteur"
+  defp get_type(type) do
+    case Actor.type_string_to_atom(type) do
+      :seller -> gettext("Seller")
+      :buyer -> gettext("Buyer")
+      nil -> type
+    end
+  end
 
   attr :graph, :any
 
   def result(assigns) do
     ~H"""
-    <div>Result</div>
+    <div>{gettext("Results")}</div>
     {@graph}
     """
   end

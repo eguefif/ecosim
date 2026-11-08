@@ -11,6 +11,7 @@ defmodule EcosimWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_scope_for_user
+    plug EcosimWeb.Locale
   end
 
   pipeline :api do
@@ -19,6 +20,8 @@ defmodule EcosimWeb.Router do
 
   scope "/", EcosimWeb do
     pipe_through :browser
+
+    get "/locale/:locale", LocaleController, :update
   end
 
   # Other scopes may use custom stacks.
@@ -49,7 +52,7 @@ defmodule EcosimWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     live_session :require_authenticated_user,
-      on_mount: [{EcosimWeb.UserAuth, :require_authenticated}] do
+      on_mount: [{EcosimWeb.UserAuth, :require_authenticated}, EcosimWeb.Locale] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
     end
@@ -61,7 +64,7 @@ defmodule EcosimWeb.Router do
     pipe_through [:browser]
 
     live_session :current_user,
-      on_mount: [{EcosimWeb.UserAuth, :mount_current_scope}] do
+      on_mount: [{EcosimWeb.UserAuth, :mount_current_scope}, EcosimWeb.Locale] do
       live "/", HomeLive, :index
       live "/create-sim", CreateSimLive, :index
       live "/join-sim", JoinSimLive, :index

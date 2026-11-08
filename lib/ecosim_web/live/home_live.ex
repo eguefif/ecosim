@@ -10,13 +10,13 @@ defmodule EcosimWeb.HomeLive do
           href={~p"/create-sim"}
           class="container shadow-md p-[64px] w-[256] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200 text-center"
         >
-          Créer une simulation
+          {gettext("Create a simulation")}
         </a>
         <a
           href={~p"/join-sim"}
           class="container shadow-md p-[64px] w-[256] scale-100 hover:scale-110 duration-200 transform-transition ease-in-out rounded-md bg-base-200 text-center"
         >
-          Rejoindre une simulation
+          {gettext("Join a simulation")}
         </a>
       </div>
     </div>

@@ -1,5 +1,6 @@
 defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
   use Phoenix.LiveComponent
+  use Gettext, backend: EcosimWeb.Gettext
 
   @impl true
   def render(assigns) do
@@ -10,7 +11,7 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
         name="actor-input"
         type="text"
         class="input w-[196px]"
-        placeholder="actor"
+        placeholder={gettext("actor")}
         phx-change="user-change-input"
         phx-target={@myself}
         value={@selected_value}

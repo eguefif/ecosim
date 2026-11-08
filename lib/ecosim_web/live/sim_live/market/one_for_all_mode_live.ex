@@ -9,19 +9,18 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   def preparation_one_for_all_mode(assigns) do
     ~H"""
     <div>
-      Ce mode requiert de la préparation. Chacun de vos utilisateurs doivent savoir leur rôle et leur consentement à payer ou recevoir (CAP, CAR). Veuillez fournir un fichier texte ou csv qui se présente de la forme:<br />
-      <pre id="preparation-file-example" class="mt-2 rounded-lg bg-base-200 p-4 font-mono text-sm">vendeur, Alice, 12
-    vendeur, Bruno, 15
-    vendeur, Chloé, 20
-    acheteur, David, 25
-    acheteur, Émilie, 18
-    acheteur, François, 10</pre>
+      {gettext(
+        "This mode requires some preparation. Each of your users must know their role and their willingness to pay or accept (WTP, WTA). Please provide a text or csv file formatted like this:"
+      )}<br />
+      <pre id="preparation-file-example" class="mt-2 rounded-lg bg-base-200 p-4 font-mono text-sm">{preparation_example()}</pre>
       <ul class="mt-2 text-sm">
         <li>
-          <strong>vendeur, nom, CAR</strong> : CAR = consentement à recevoir (prix minimum accepté)
+          <strong>{gettext("seller, name, WTA")}</strong>
+          : {gettext("WTA = willingness to accept (minimum accepted price)")}
         </li>
         <li>
-          <strong>acheteur, nom, CAP</strong> : CAP = consentement à payer (prix maximum accepté)
+          <strong>{gettext("buyer, name, WTP")}</strong>
+          : {gettext("WTP = willingness to pay (maximum accepted price)")}
         </li>
       </ul>
 
@@ -37,7 +36,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
           class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-base-300 p-6 text-sm transition hover:border-primary hover:bg-base-200"
         >
           <.icon name="hero-arrow-up-tray" class="size-6" />
-          <span>Glissez votre fichier ici ou cliquez pour le sélectionner (.txt, .csv)</span>
+          <span>{gettext("Drop your file here or click to select it (.txt, .csv)")}</span>
           <.live_file_input upload={@uploads.actors} class="sr-only" />
         </label>
 
@@ -48,7 +47,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
               type="button"
               phx-click="cancel_upload"
               phx-value-ref={entry.ref}
-              aria-label="Annuler"
+              aria-label={gettext("Cancel")}
               class="opacity-60 transition hover:opacity-100"
             >
               <.icon name="hero-x-mark" class="size-4" />
@@ -70,7 +69,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
           disabled={@uploads.actors.entries == []}
           class="btn btn-primary"
         >
-          Téléverser
+          {gettext("Upload")}
         </button>
       </form>
     </div>
@@ -84,10 +83,10 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
     ~H"""
     <div class="flex flex-col gap-[32px]">
       <div class="flex flex-row gap-[16px] self-center">
-        <div class="btn btn-primary" phx-click="back-to-preparation">Retour</div>
-        <div class="btn btn-warning" phx-click="restart-sim">Recommencer</div>
-        <div class="btn btn-primary" phx-click="finish-sim">Finir</div>
-        <div class="btn btn-warning" phx-click="undo-last-action">Annuler</div>
+        <div class="btn btn-primary" phx-click="back-to-preparation">{gettext("Back")}</div>
+        <div class="btn btn-warning" phx-click="restart-sim">{gettext("Restart")}</div>
+        <div class="btn btn-primary" phx-click="finish-sim">{gettext("Finish")}</div>
+        <div class="btn btn-warning" phx-click="undo-last-action">{gettext("Undo")}</div>
       </div>
       <.show_periods periods={length(@market.periods)} />
       <.show_add_action_form actors={Market.active_actors(@market)} />
@@ -111,8 +110,14 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             id="actor-input"
             actors={@actors}
           />
-          <input id="price" name="price" type="text" class="input w-[64px]" placeholder="prix" />
-          <button type="submit" class="btn btn-primary">Ajouter</button>
+          <input
+            id="price"
+            name="price"
+            type="text"
+            class="input w-[64px]"
+            placeholder={gettext("price")}
+          />
+          <button type="submit" class="btn btn-primary">{gettext("Add")}</button>
         </div>
       </form>
     </div>
@@ -131,7 +136,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
         phx-click="show-period"
         phx-value-period={n}
       >
-        Période {n + 1}
+        {gettext("Period %{number}", number: n + 1)}
       </div>
     </div>
     """
@@ -146,12 +151,14 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
       <div class="flex flex-row justify-around w-[640]">
         <.show_price
           price={@info.last_seller_price}
-          label="Vendeur"
+          kind="seller"
+          label={gettext("Seller")}
           actors={@actors |> Enum.filter(&(&1.type == :buyer))}
         />
         <.show_price
           price={@info.last_buyer_price}
-          label="Acheteur"
+          kind="buyer"
+          label={gettext("Buyer")}
           actors={
             @actors
             |> Enum.filter(&(&1.type == :seller))
@@ -168,9 +175,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
     """
   end
 
-  defp action_to_string(:sell_at), do: "vend"
-  defp action_to_string(:buy_at), do: "achète"
-
+  attr :kind, :string, required: true, doc: "seller or buyer, used for ids and event params"
   attr :label, :string
   attr :price, :any
   attr :actors, :list
@@ -184,21 +189,23 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
           <div :if={@price != :none}>
             {@price}
           </div>
-          <div :if={@price == :none}>Pas de prix</div>
+          <div :if={@price == :none}>{gettext("No price")}</div>
           <.form
-            id={"accept-#{@label}"}
+            id={"accept-#{@kind}"}
             for={}
             phx-submit="accept-price"
           >
             <.input
               type="select"
-              name={"actors-input-#{@label |> String.downcase()}"}
+              name={"actors-input-#{@kind}"}
               value=""
-              id={"actors-input-#{@label}"}
+              id={"actors-input-#{@kind}"}
               options={@actors |> Enum.map(& &1.name)}
               disabled={@price == :none}
             />
-            <button type="submit" class="btn btn-primary" disabled={@price == :none}>Accepter prix</button>
+            <button type="submit" class="btn btn-primary" disabled={@price == :none}>
+              {gettext("Accept price")}
+            </button>
           </.form>
         </p>
       </div>
@@ -212,7 +219,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
     ~H"""
     <.show_actions
       actions={@info.transactions |> Enum.reverse()}
-      label="Transactions"
+      label={gettext("Transactions")}
       row_item={
         fn action ->
           actors = Map.get(action.params, :actors)
@@ -223,9 +230,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
     >
       <:action_row :let={[actor1, actor2, price]}>
         <div class="shadow-md p-[16px] rounded-lg text-center bg-transaction" ,>
-          <span class="font-bold">{actor1.name}</span>
-          vend à <span class="font-bold">{actor2.name}</span>
-          aux prix de <span class="font-bold">{price}</span>
+          {transaction_text(actor1.name, actor2.name, price)}
         </div>
       </:action_row>
     </.show_actions>
@@ -238,14 +243,14 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
     ~H"""
     <.show_actions
       actions={@info.events |> Enum.reverse()}
-      label="Événements"
+      label={gettext("Events")}
       row_item={
         fn action ->
           if action.action == :transact do
             actor1 = Map.get(action.params, :actors) |> Enum.at(0)
             actor2 = Map.get(action.params, :actors) |> Enum.at(1)
             price = Map.get(action.params, :price)
-            [Enum.join([actor1.name, actor2.name], " et "), :transact, price]
+            [{actor1.name, actor2.name}, :transact, price]
           else
             actor = Map.get(action.params, :actor)
             price = Map.get(action.params, :price)
@@ -262,8 +267,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             "bg-transaction"
           ]}
         >
-          Transaction entre <span class="font-bold">{actor}</span>
-          à <span class="font-bold">{price}</span>
+          {transaction_between_text(actor, price)}
         </div>
         <div
           :if={action_type != :transact}
@@ -273,8 +277,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             action_type == :buy_at && "bg-buyer"
           ]}
         >
-          <span class="font-bold">{actor.name}</span> {action_to_string(action_type)} à
-          <span class="font-bold">{price}</span>
+          {action_text(action_type, actor.name, price)}
         </div>
       </:action_row>
     </.show_actions>
@@ -303,8 +306,60 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
     """
   end
 
-  defp upload_error_to_string(:too_large), do: "Le fichier est trop volumineux."
-  defp upload_error_to_string(:not_accepted), do: "Format non accepté (.txt ou .csv seulement)."
-  defp upload_error_to_string(:too_many_files), do: "Un seul fichier est permis."
-  defp upload_error_to_string(_), do: "Erreur lors du téléversement."
+  defp preparation_example do
+    seller = gettext("seller")
+    buyer = gettext("buyer")
+
+    [
+      {seller, "Alice", 12},
+      {seller, "Bruno", 15},
+      {seller, "Chloé", 20},
+      {buyer, "David", 25},
+      {buyer, "Émilie", 18},
+      {buyer, "François", 10}
+    ]
+    |> Enum.map_join("\n", fn {type, name, wt} -> "#{type}, #{name}, #{wt}" end)
+  end
+
+  # Sentences are translated as a whole (word order differs between languages).
+  # Interpolated values are HTML-escaped and rendered in bold; the translated
+  # templates themselves come from our own .po files.
+  defp transaction_text(seller, buyer, price) do
+    gettext("%{seller} sells to %{buyer} at the price of %{price}",
+      seller: bold(seller),
+      buyer: bold(buyer),
+      price: bold(price)
+    )
+    |> raw()
+  end
+
+  defp transaction_between_text({actor1, actor2}, price) do
+    gettext("Transaction between %{actor1} and %{actor2} at %{price}",
+      actor1: bold(actor1),
+      actor2: bold(actor2),
+      price: bold(price)
+    )
+    |> raw()
+  end
+
+  defp action_text(:sell_at, actor, price) do
+    gettext("%{actor} sells at %{price}", actor: bold(actor), price: bold(price)) |> raw()
+  end
+
+  defp action_text(:buy_at, actor, price) do
+    gettext("%{actor} buys at %{price}", actor: bold(actor), price: bold(price)) |> raw()
+  end
+
+  defp bold(value) do
+    escaped = value |> to_string() |> html_escape() |> safe_to_string()
+    ~s(<span class="font-bold">#{escaped}</span>)
+  end
+
+  defp upload_error_to_string(:too_large), do: gettext("The file is too large.")
+
+  defp upload_error_to_string(:not_accepted),
+    do: gettext("Format not accepted (.txt or .csv only).")
+
+  defp upload_error_to_string(:too_many_files), do: gettext("Only one file is allowed.")
+  defp upload_error_to_string(_), do: gettext("Error while uploading.")
 end

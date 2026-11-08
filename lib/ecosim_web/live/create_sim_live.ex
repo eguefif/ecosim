@@ -5,7 +5,7 @@ defmodule EcosimWeb.CreateSimLive do
   def render(assigns) do
     ~H"""
     <.header>
-      Create Sim
+      {gettext("Create a simulation")}
     </.header>
     <div class="flex flex-col gap-[32px]">
       <.choose_sim sim={@sim} />
@@ -14,7 +14,7 @@ defmodule EcosimWeb.CreateSimLive do
         :if={@sim != nil && @mode != nil}
         href={build_sim_route(@sim, @mode)}
         class="btn btn-primary mx-auto w-[128px]"
-      >Commencer</.link>
+      >{gettext("Start")}</.link>
     </div>
     """
   end
@@ -33,13 +33,13 @@ defmodule EcosimWeb.CreateSimLive do
           phx-value-sim="market"
         >
           <figure>
-            <img src={~p"/images/market-card.jpg"} alt="Marché" />
+            <img src={~p"/images/market-card.jpg"} alt={gettext("Market")} />
           </figure>
           <div class="card-body">
             <h2 class="card-title">
-              Le Marché
+              {gettext("The Market")}
             </h2>
-            <p>Simuler un marché selon le protocol de Veron Smith de 1962.</p>
+            <p>{gettext("Simulate a market following Vernon Smith's 1962 protocol.")}</p>
           </div>
         </div>
       </div>
@@ -62,11 +62,12 @@ defmodule EcosimWeb.CreateSimLive do
         >
           <div class="card-body">
             <h2 class="card-title">
-              Un utilisateur pour tous
+              {gettext("One user for all")}
             </h2>
             <p>
-              Dans ce mode, un utilisateur fournit une liste des acteurs économiques et s'occupe d'enregistrer
-              toutes les actions.
+              {gettext(
+                "In this mode, one user provides the list of economic actors and records every action."
+              )}
             </p>
           </div>
         </div>
@@ -80,10 +81,12 @@ defmodule EcosimWeb.CreateSimLive do
         >
           <div class="card-body">
             <h2 class="card-title">
-              Multi utilisateur
+              {gettext("Multi-user")}
             </h2>
             <p>
-              Dans ce mode, les utilisateurs utilisent leur propre terminal et rejoingne la simulation avec un code
+              {gettext(
+                "In this mode, each user uses their own device and joins the simulation with a code."
+              )}
             </p>
           </div>
         </div>
@@ -97,10 +100,10 @@ defmodule EcosimWeb.CreateSimLive do
         >
           <div class="card-body">
             <h2 class="card-title">
-              Un utilisateur avec bots
+              {gettext("One user with bots")}
             </h2>
             <p>
-              Dans ce mode, un utilisateur fait la simulation avec des bots.
+              {gettext("In this mode, one user runs the simulation with bots.")}
             </p>
           </div>
         </div>

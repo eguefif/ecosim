@@ -13,9 +13,10 @@ Ecosim is a website that provides economic simulators for high school teachers a
 - [x] List of participants should not have person who make a transaction. This should be filtered with
 the period's actor list.
 - [x] Add a button to manually add a period
-- [ ] Add result
-    - [ ] Graph as the one found in the 1962 article
-- [ ] Extract common UI interface from the one_for_all_mode_live into a market_components
+- [x] Add result
+    - [x] Graph as the one found in the 1962 article
+- [x] Extract common UI interface from the one_for_all_mode_live into a market_components
+- [ ] Improve sim action buttons
 - [ ] Add localisation
 
 
