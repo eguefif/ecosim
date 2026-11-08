@@ -36,6 +36,8 @@ defmodule Ecosim.Sim.Market do
   @type buyers() :: [Actor.t()]
   @type sellers() :: [Actor.t()]
   @type price() :: number()
+  @type accept_params() :: %{actor: Actor.t()}
+  @type transaction() :: [%{index: integer(), price: number()}]
 
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
@@ -87,7 +89,7 @@ defmodule Ecosim.Sim.Market do
                       price is below WTA.
   """
   @spec update(t(), :add_period) :: {:ok, t()}
-  @spec update(t(), :accept, Action.accept_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
+  @spec update(t(), :accept, accept_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
   @spec update(t(), :offer, Action.offer_params()) ::
           {:ok, t()} | {:error, :price_not_in_wt}
   def update(%__MODULE__{} = market, :add_period) do
@@ -195,5 +197,16 @@ defmodule Ecosim.Sim.Market do
     period = Enum.at(market.periods, -1)
     actors = market.sellers ++ market.buyers
     Enum.filter(actors, fn actor -> actor in period.actors end)
+  end
+
+  @doc """
+  Returns the list of transaction per period with the price.
+  """
+  @spec results(t()) :: [transaction()]
+  def results(%__MODULE__{} = market) do
+    market.periods
+    |> Enum.flat_map(&Period.transactions/1)
+    |> Enum.with_index()
+    |> Enum.map(fn {%Action{params: %{price: price}}, index} -> %{x: index, y: price} end)
   end
 end

@@ -65,7 +65,7 @@ defmodule EcosimWeb.CreateSimLive do
               Un utilisateur pour tous
             </h2>
             <p>
-              Dans ce mode, un utilisateur fournit une liste de participants et s'occupe d'enregistrer
+              Dans ce mode, un utilisateur fournit une liste des acteurs économiques et s'occupe d'enregistrer
               toutes les actions.
             </p>
           </div>

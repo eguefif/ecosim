@@ -4,56 +4,6 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Period
 
-  attr :mode, :string
-  attr :uploads, :map, required: true
-  attr :participants, :list
-
-  def preparation(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-[8px]">
-      <.preparation_one_for_all_mode :if={@mode == "one-for-all"} uploads={@uploads} />
-
-      <.show_participants :if={@participants != []} participants={@participants} />
-      <div class="divider"></div>
-      <div
-        class={["btn btn-primary w-[96px] mx-auto", @participants == [] && "btn-disabled"]}
-        phx-click="start"
-      >
-        Démarrer
-      </div>
-    </div>
-    """
-  end
-
-  attr :participants, :list, required: true
-
-  def show_participants(assigns) do
-    # Use market lists to display users
-    ~H"""
-    <div class="divider text-xl">Participants</div>
-    <ul id="participants" class="list gap-[4px]">
-      <li
-        :for={[type, name, _] <- @participants}
-        class={[
-          type == "acheteur" && "bg-buyer",
-          type == "vendeur" && "bg-seller",
-          "list-row items-baseline flex flex-row justify-between"
-        ]}
-      >
-        <div class="flex flex-row gap-[16px] items-baseline">
-          <span class="text-lg font-bold">{name}</span><span class="italic">{get_type(type)}</span>
-        </div>
-        <button class="btn btn-square btn-ghost">
-          <.icon name="hero-x-mark" />
-        </button>
-      </li>
-    </ul>
-    """
-  end
-
-  def get_type("vendeur"), do: "Vendeur"
-  def get_type("acheteur"), do: "Acheteur"
-
   attr :uploads, :map, required: true
 
   def preparation_one_for_all_mode(assigns) do
@@ -76,22 +26,22 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
       </ul>
 
       <form
-        id="participants-upload-form"
+        id="actors-upload-form"
         phx-change="validate_upload"
         phx-submit="save_upload"
         class="mt-6 space-y-4"
       >
         <label
-          for={@uploads.participants.ref}
-          phx-drop-target={@uploads.participants.ref}
+          for={@uploads.actors.ref}
+          phx-drop-target={@uploads.actors.ref}
           class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-base-300 p-6 text-sm transition hover:border-primary hover:bg-base-200"
         >
           <.icon name="hero-arrow-up-tray" class="size-6" />
           <span>Glissez votre fichier ici ou cliquez pour le sélectionner (.txt, .csv)</span>
-          <.live_file_input upload={@uploads.participants} class="sr-only" />
+          <.live_file_input upload={@uploads.actors} class="sr-only" />
         </label>
 
-        <div :for={entry <- @uploads.participants.entries} id={"upload-entry-#{entry.ref}"}>
+        <div :for={entry <- @uploads.actors.entries} id={"upload-entry-#{entry.ref}"}>
           <div class="flex items-center justify-between text-sm">
             <span>{entry.client_name}</span>
             <button
@@ -105,19 +55,19 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             </button>
           </div>
           <progress value={entry.progress} max="100" class="w-full">{entry.progress}%</progress>
-          <p :for={err <- upload_errors(@uploads.participants, entry)} class="text-sm text-error">
+          <p :for={err <- upload_errors(@uploads.actors, entry)} class="text-sm text-error">
             {upload_error_to_string(err)}
           </p>
         </div>
 
-        <p :for={err <- upload_errors(@uploads.participants)} class="text-sm text-error">
+        <p :for={err <- upload_errors(@uploads.actors)} class="text-sm text-error">
           {upload_error_to_string(err)}
         </p>
 
         <button
           type="submit"
-          id="participants-upload-submit"
-          disabled={@uploads.participants.entries == []}
+          id="actors-upload-submit"
+          disabled={@uploads.actors.entries == []}
           class="btn btn-primary"
         >
           Téléverser
@@ -140,16 +90,16 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
         <div class="btn btn-warning" phx-click="undo-last-action">Annuler</div>
       </div>
       <.show_periods periods={length(@market.periods)} />
-      <.show_add_action_form participants={Market.active_actors(@market)} />
+      <.show_add_action_form actors={Market.active_actors(@market)} />
       <.show_current_period
         info={Enum.at(@market.periods, @period_index) |> Period.info()}
-        participants={@market.buyers ++ @market.sellers}
+        actors={@market.buyers ++ @market.sellers}
       />
     </div>
     """
   end
 
-  attr :participants, :list
+  attr :actors, :list
 
   def show_add_action_form(assigns) do
     ~H"""
@@ -158,8 +108,8 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
         <div class="flex flex-row gap-[8px]">
           <.live_component
             module={EcosimWeb.SimLive.Market.InputAutocompleteComponent}
-            id="participant-input"
-            participants={@participants}
+            id="actor-input"
+            actors={@actors}
           />
           <input id="price" name="price" type="text" class="input w-[64px]" placeholder="prix" />
           <button type="submit" class="btn btn-primary">Ajouter</button>
@@ -188,7 +138,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   end
 
   attr :info, :map
-  attr :participants, :list
+  attr :actors, :list
 
   def show_current_period(assigns) do
     ~H"""
@@ -197,13 +147,13 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
         <.show_price
           price={@info.last_seller_price}
           label="Vendeur"
-          participants={@participants |> Enum.filter(&(&1.type == :buyer))}
+          actors={@actors |> Enum.filter(&(&1.type == :buyer))}
         />
         <.show_price
           price={@info.last_buyer_price}
           label="Acheteur"
-          participants={
-            @participants
+          actors={
+            @actors
             |> Enum.filter(&(&1.type == :seller))
           }
         />
@@ -223,7 +173,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
 
   attr :label, :string
   attr :price, :any
-  attr :participants, :list
+  attr :actors, :list
 
   def show_price(assigns) do
     ~H"""
@@ -242,10 +192,10 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
           >
             <.input
               type="select"
-              name={"participants-input-#{@label |> String.downcase()}"}
+              name={"actors-input-#{@label |> String.downcase()}"}
               value=""
-              id={"participants-input-#{@label}"}
-              options={@participants |> Enum.map(& &1.name)}
+              id={"actors-input-#{@label}"}
+              options={@actors |> Enum.map(& &1.name)}
               disabled={@price == :none}
             />
             <button type="submit" class="btn btn-primary" disabled={@price == :none}>Accepter prix</button>
@@ -350,12 +300,6 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
         </div>
       </div>
     </div>
-    """
-  end
-
-  def result(assigns) do
-    ~H"""
-    <div>Result</div>
     """
   end
 

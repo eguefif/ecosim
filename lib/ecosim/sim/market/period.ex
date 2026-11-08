@@ -46,8 +46,11 @@ defmodule Ecosim.Sim.Market.Period do
     period.actions
   end
 
+  @doc """
+  Returns the list of transaction for the current periods.
+  """
   @spec transactions(t()) :: [Action.t()]
-  defp transactions(%__MODULE__{} = period) do
+  def transactions(%__MODULE__{} = period) do
     period.actions |> Enum.filter(&Action.is_transaction/1)
   end
 
