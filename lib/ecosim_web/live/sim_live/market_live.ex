@@ -38,31 +38,31 @@ defmodule EcosimWeb.Sim.MarketLive do
   @impl true
   def mount(%{"mode" => mode}, _session, socket) do
     # TODO: remove hardcoded test data, restore `:preparation` step and empty actors
-    actors = [
-      ["vendeur", "Alice", "12"],
-      ["vendeur", "Bruno", "15"],
-      ["vendeur", "Chloé", "20"],
-      ["acheteur", "David", "25"],
-      ["acheteur", "Émilie", "18"],
-      ["acheteur", "François", "10"]
-    ]
+    # actors = [
+    #  ["vendeur", "Alice", "12"],
+    #  ["vendeur", "Bruno", "15"],
+    #  ["vendeur", "Chloé", "20"],
+    #  ["acheteur", "David", "25"],
+    #  ["acheteur", "Émilie", "18"],
+    #  ["acheteur", "François", "10"]
+    # ]
 
-    market = build_test_market()
-    results = Market.results(market)
+    # market = build_test_market()
+    # results = Market.results(market)
 
     {:ok,
      socket
      |> assign(:mode, mode)
-     |> assign(:step, :result)
-     |> assign(:market, market)
-     |> assign(
-       :graph,
-       results
-       |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
-       |> make_graph("Evolution du prix par transaction")
-     )
-     |> assign(:period_index, 0)
-     |> assign(:actors, actors)
+     |> assign(:step, :preparation)
+     # |> assign(:market, market)
+     # |> assign(
+     #  :graph,
+     #  results
+     #  |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
+     #  |> make_graph("Evolution du prix par transaction")
+     # )
+     # |> assign(:period_index, 0)
+     |> assign(:actors, [])
      |> allow_upload(:actors,
        accept: ~w(.txt .csv),
        max_entries: 1,
@@ -72,8 +72,12 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def handle_event("start", _, socket) do
-    buyers = socket.assigns.actors |> Enum.filter(&(Enum.at(&1, 0) == "acheteur"))
-    sellers = socket.assigns.actors |> Enum.filter(&(Enum.at(&1, 0) == "vendeur"))
+    actors =
+      socket.assigns.actors
+      |> Enum.map(&Actor.new/1)
+
+    buyers = actors |> Enum.filter(&(&1.type == :buyer))
+    sellers = actors |> Enum.filter(&(&1.type == :seller))
     market = Market.new(buyers, sellers)
 
     {:noreply,
