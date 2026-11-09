@@ -12,9 +12,17 @@ defmodule EcosimWeb.Sim.MarketLive do
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
         {gettext("Market")} - ({get_mode(@mode)})
-        <:subtitle :if={@step == :preparation}>{gettext("1 - Preparation")}</:subtitle>
-        <:subtitle :if={@step == :sim}>{gettext("2 - Simulation")}</:subtitle>
-        <:subtitle :if={@step == :result}>{gettext("3 - Results")}</:subtitle>
+        <:subtitle>
+          <.link navigate="https://www.researchgate.net/publication/24106520_An_Experimental_Study_of_Competitive_Market_Behavior">
+            {gettext("Based on Veron Smith 1962 paper")}
+          </.link>
+        </:subtitle>
+        <:actions>
+          <button phx-click="back" class="btn btn-primary">
+            <.icon name="hero-arrow-left" class="size-6" />
+            {gettext("Back")}
+          </button>
+        </:actions>
       </.header>
 
       <CommonLive.preparation
@@ -65,8 +73,15 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:period_index, 0)}
   end
 
-  def handle_event("back-to-preparation", _, socket) do
-    {:noreply, assign(socket, :step, :preparation)}
+  def handle_event("back", _, socket) do
+    socket =
+      case socket.assigns.step do
+        :preparation -> socket |> push_navigate(to: ~p"/create-sim")
+        :sim -> assign(socket, :step, :preparation)
+        :result -> assign(socket, :step, :sim)
+      end
+
+    {:noreply, socket}
   end
 
   def handle_event("finish-sim", _, socket) do
@@ -87,7 +102,7 @@ defmodule EcosimWeb.Sim.MarketLive do
   def handle_event(
         "add-action",
         %{"actor" => actor, "price" => price},
-        %{assigns: %{market: market}} = socket
+        %{assigns: %{market: market, period_index: period_index}} = socket
       ) do
     price =
       case Integer.parse(price) do
@@ -100,7 +115,7 @@ defmodule EcosimWeb.Sim.MarketLive do
         {:noreply, put_flash(socket, :error, gettext("The given actor does not exist."))}
 
       actor ->
-        case Market.update(market, :offer, %{actor: actor, price: price}) do
+        case Market.update(market, :offer, %{actor: actor, price: price}, period_index) do
           {:ok, market} ->
             {:noreply, socket |> assign(:market, market)}
 
@@ -123,9 +138,10 @@ defmodule EcosimWeb.Sim.MarketLive do
         socket
       ) do
     market = socket.assigns.market
+    period_index = socket.assigns.period_index
     actor = Market.actor(market, actor)
 
-    case Market.update(market, :accept, %{actor: actor}) do
+    case Market.update(market, :accept, %{actor: actor}, period_index) do
       {:ok, market} ->
         {:noreply, socket |> assign(:market, market)}
 
@@ -145,9 +161,10 @@ defmodule EcosimWeb.Sim.MarketLive do
         socket
       ) do
     market = socket.assigns.market
+    period_index = socket.assigns.period_index
     actor = Market.actor(market, actor)
 
-    case Market.update(market, :accept, %{actor: actor}) do
+    case Market.update(market, :accept, %{actor: actor}, period_index) do
       {:ok, market} ->
         {:noreply, socket |> assign(:market, market)}
 
@@ -168,7 +185,15 @@ defmodule EcosimWeb.Sim.MarketLive do
   end
 
   def handle_event("undo-last-action", %{}, socket) do
-    {:noreply, assign(socket, :market, Market.undo(socket.assigns.market))}
+    {:noreply,
+     assign(
+       socket,
+       :market,
+       Market.undo(
+         socket.assigns.market,
+         socket.assigns.period_index
+       )
+     )}
   end
 
   def handle_event("add-period", %{}, socket) do

@@ -9,7 +9,8 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
 
   def preparation_one_for_all_mode(assigns) do
     ~H"""
-    <div>
+    <div class="flex flex-col gap-[16px]">
+      <h2 class="text-lg font-bold">{gettext("1 - Preparation")}</h2>
       {gettext(
         "This mode requires some preparation. Each of your users must know their role and their willingness to pay or accept (WTP, WTA). Please provide a text or csv file formatted like this:"
       )}<br />
@@ -83,12 +84,13 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   def sim(assigns) do
     ~H"""
     <div class="flex flex-col gap-[32px]">
-      <CommonLive.show_sim_action_buttons />
-      <CommonLive.show_periods periods={length(@market.periods)} />
-      <.show_add_action_form actors={Market.active_actors(@market)} />
+      <CommonLive.show_sim_action_buttons>
+        <.show_add_action_form actors={Market.active_actors(@market, @period_index)} />
+      </CommonLive.show_sim_action_buttons>
+      <CommonLive.show_periods periods={length(@market.periods)} current_period={@period_index} />
       <.show_current_period
         info={Enum.at(@market.periods, @period_index) |> Period.info()}
-        actors={Market.active_actors(@market)}
+        actors={Market.active_actors(@market, @period_index)}
       />
     </div>
     """
@@ -98,7 +100,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
 
   def show_add_action_form(assigns) do
     ~H"""
-    <div class="shadow-md p-[16px] flex justify-center">
+    <div class="p-[16px] flex justify-center">
       <form id="one-for-all-add-action-form" phx-submit="add-action">
         <div class="flex flex-row gap-[8px]">
           <.live_component

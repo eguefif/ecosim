@@ -5,7 +5,10 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div
+      phx-click-away="click-away"
+      phx-target={@myself}
+    >
       <input
         id="actor-input"
         name="actor-input"
@@ -19,11 +22,7 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
       />
       <input type="hidden" value={@selected_value} name="actor" />
       <div :if={@show_entries == true} class="static">
-        <ul
-          class="list bg-base-200 shadow-md w-[196px] absolute z-10 isolate"
-          phx-click-away="click-away"
-          phx-target={@myself}
-        >
+        <ul class="list bg-base-200 shadow-md w-[196px] absolute z-10 isolate">
           <li
             :for={entry <- @entries}
             class="list-row hover:bg-base-300"
@@ -73,15 +72,10 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
 
   @impl true
   def handle_event("click-away", _, socket) do
-    if socket.assigns.show_entries == true do
-      {:noreply, socket}
-    else
-      {:noreply,
-       socket
-       |> assign(:selected_value, nil)
-       |> assign(:show_entries, false)
-       |> assign(:entries, [])}
-    end
+    {:noreply,
+     socket
+     |> assign(:show_entries, false)
+     |> assign(:entries, [])}
   end
 
   def handle_event("show-list", _, socket) do

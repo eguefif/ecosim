@@ -16,13 +16,16 @@ the period's actor list.
 - [x] Add result
     - [x] Graph as the one found in the 1962 article
 - [x] Extract common UI interface from the one_for_all_mode_live into a market_components
+- [ ] In Result, show the supply and demand theoritical plots.
 - [ ] Improve sim action buttons
 
 ### Bug
-- [ ] When displaying a transaction, sometimes a buyer is said to have sold something to a seller. We need
+- [x] When displaying a transaction, sometimes a buyer is said to have sold something to a seller. We need
 to display the correct actor order depending on the actor's type.
-- [ ] When Adding a period, it should reset the list of actions
-- [ ] When clicking on a period, it should show the period
+- [x] Click away should hide list of actors.
+- [x] When Adding a period, it should reset the list of actions
+- [x] It should always take the current period list of actors
+- [x] When clicking on a period, it should show the period
 
 
 ## Roadmap
