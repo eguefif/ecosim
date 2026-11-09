@@ -13,6 +13,7 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
         class="input w-[196px]"
         placeholder={gettext("actor")}
         phx-change="user-change-input"
+        phx-focus="show-list"
         phx-target={@myself}
         value={@selected_value}
       />
@@ -72,10 +73,19 @@ defmodule EcosimWeb.SimLive.Market.InputAutocompleteComponent do
 
   @impl true
   def handle_event("click-away", _, socket) do
-    {:noreply,
-     socket
-     |> assign(:selected_value, nil)
-     |> assign(:show_entries, false)
-     |> assign(:entries, [])}
+    if socket.assigns.show_entries == true do
+      {:noreply, socket}
+    else
+      {:noreply,
+       socket
+       |> assign(:selected_value, nil)
+       |> assign(:show_entries, false)
+       |> assign(:entries, [])}
+    end
+  end
+
+  def handle_event("show-list", _, socket) do
+    entries = socket.assigns.actors |> Enum.map(& &1.name)
+    {:noreply, socket |> assign(:show_entries, true) |> assign(:entries, entries)}
   end
 end

@@ -14,12 +14,22 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
       <OneMode.preparation_one_for_all_mode :if={@mode == "one-for-all"} uploads={@uploads} />
 
       <.show_actors :if={@actors != []} actors={@actors} />
-      <div class="divider"></div>
-      <div
-        class={["btn btn-primary w-[96px] mx-auto", @actors == [] && "btn-disabled"]}
-        phx-click="start"
-      >
-        {gettext("Start")}
+      <div class="flex flex-row gap-[8px] justify-around">
+        <div class="divider"></div>
+        <button
+          class={["btn btn-primary w-[96px] mx-auto", @actors == [] && "btn-disabled"]}
+          phx-click="start"
+        >
+          {gettext("Start")}
+        </button>
+        <button
+          type="submit"
+          id="default-list-button"
+          phx-click="user-click-default-button"
+          class="btn btn-secondary"
+        >
+          {gettext("Use example list")}
+        </button>
       </div>
     </div>
     """

@@ -37,31 +37,10 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def mount(%{"mode" => mode}, _session, socket) do
-    # TODO: remove hardcoded test data, restore `:preparation` step and empty actors
-    # actors = [
-    #  ["vendeur", "Alice", "12"],
-    #  ["vendeur", "Bruno", "15"],
-    #  ["vendeur", "Chloé", "20"],
-    #  ["acheteur", "David", "25"],
-    #  ["acheteur", "Émilie", "18"],
-    #  ["acheteur", "François", "10"]
-    # ]
-
-    # market = build_test_market()
-    # results = Market.results(market)
-
     {:ok,
      socket
      |> assign(:mode, mode)
      |> assign(:step, :preparation)
-     # |> assign(:market, market)
-     # |> assign(
-     #  :graph,
-     #  results
-     #  |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
-     #  |> make_graph("Evolution du prix par transaction")
-     # )
-     # |> assign(:period_index, 0)
      |> assign(:actors, [])
      |> allow_upload(:actors,
        accept: ~w(.txt .csv),
@@ -174,6 +153,16 @@ defmodule EcosimWeb.Sim.MarketLive do
     end
   end
 
+  def handle_event("user-click-default-button", %{}, socket) do
+    market = build_test_market()
+
+    {:noreply,
+     socket
+     |> assign(:market, market)
+     |> assign(:step, :sim)
+     |> assign(:period_index, 0)}
+  end
+
   def handle_event("undo-last-action", %{}, socket) do
     {:noreply, assign(socket, :market, Market.undo(socket.assigns.market))}
   end
@@ -231,74 +220,75 @@ defmodule EcosimWeb.Sim.MarketLive do
       Actor.new(:seller, "Chloé", 20)
     ]
 
-    periods = [
-      # Period 1: David accepts Bruno at 20, Alice accepts Émilie at 17
-      [
-        {:offer, "Alice", 22},
-        {:offer, "David", 14},
-        {:offer, "Bruno", 20},
-        {:accept, "David"},
-        {:offer, "Émilie", 15},
-        {:offer, "Alice", 19},
-        {:offer, "Émilie", 17},
-        {:accept, "Alice"},
-        {:offer, "Chloé", 24},
-        {:offer, "François", 8},
-        {:offer, "Chloé", 22},
-        {:offer, "François", 10}
-      ],
-      # Period 2: David accepts Alice at 17, Émilie accepts Bruno at 17
-      [
-        {:offer, "Bruno", 19},
-        {:offer, "Émilie", 14},
-        {:offer, "Alice", 18},
-        {:offer, "David", 16},
-        {:offer, "Alice", 17},
-        {:accept, "David"},
-        {:offer, "Émilie", 15},
-        {:offer, "Bruno", 17},
-        {:accept, "Émilie"},
-        {:offer, "Chloé", 22},
-        {:offer, "François", 10}
-      ],
-      # Period 3: Bruno accepts Émilie at 16, Alice accepts David at 16
-      [
-        {:offer, "David", 15},
-        {:offer, "Bruno", 18},
-        {:offer, "Émilie", 16},
-        {:accept, "Bruno"},
-        {:offer, "Alice", 17},
-        {:offer, "David", 16},
-        {:accept, "Alice"},
-        {:offer, "Chloé", 21},
-        {:offer, "François", 9}
-      ],
-      # Period 4: Émilie accepts Bruno at 16, Alice accepts David at 16
-      [
-        {:offer, "Alice", 17},
-        {:offer, "Émilie", 16},
-        {:offer, "Bruno", 16},
-        {:accept, "Émilie"},
-        {:offer, "David", 16},
-        {:accept, "Alice"},
-        {:offer, "Chloé", 20},
-        {:offer, "François", 10}
-      ]
-    ]
+    # periods = [
+    #  # Period 1: David accepts Bruno at 20, Alice accepts Émilie at 17
+    #  [
+    #    {:offer, "Alice", 22},
+    #    {:offer, "David", 14},
+    #    {:offer, "Bruno", 20},
+    #    {:accept, "David"},
+    #    {:offer, "Émilie", 15},
+    #    {:offer, "Alice", 19},
+    #    {:offer, "Émilie", 17},
+    #    {:accept, "Alice"},
+    #    {:offer, "Chloé", 24},
+    #    {:offer, "François", 8},
+    #    {:offer, "Chloé", 22},
+    #    {:offer, "François", 10}
+    #  ],
+    #  # Period 2: David accepts Alice at 17, Émilie accepts Bruno at 17
+    #  [
+    #    {:offer, "Bruno", 19},
+    #    {:offer, "Émilie", 14},
+    #    {:offer, "Alice", 18},
+    #    {:offer, "David", 16},
+    #    {:offer, "Alice", 17},
+    #    {:accept, "David"},
+    #    {:offer, "Émilie", 15},
+    #    {:offer, "Bruno", 17},
+    #    {:accept, "Émilie"},
+    #    {:offer, "Chloé", 22},
+    #    {:offer, "François", 10}
+    #  ],
+    #  # Period 3: Bruno accepts Émilie at 16, Alice accepts David at 16
+    #  [
+    #    {:offer, "David", 15},
+    #    {:offer, "Bruno", 18},
+    #    {:offer, "Émilie", 16},
+    #    {:accept, "Bruno"},
+    #    {:offer, "Alice", 17},
+    #    {:offer, "David", 16},
+    #    {:accept, "Alice"},
+    #    {:offer, "Chloé", 21},
+    #    {:offer, "François", 9}
+    #  ],
+    #  # Period 4: Émilie accepts Bruno at 16, Alice accepts David at 16
+    #  [
+    #    {:offer, "Alice", 17},
+    #    {:offer, "Émilie", 16},
+    #    {:offer, "Bruno", 16},
+    #    {:accept, "Émilie"},
+    #    {:offer, "David", 16},
+    #    {:accept, "Alice"},
+    #    {:offer, "Chloé", 20},
+    #    {:offer, "François", 10}
+    #  ]
+    # ]
 
-    periods
-    |> Enum.with_index()
-    |> Enum.reduce(Market.new(buyers, sellers), fn {actions, index}, market ->
-      market =
-        if index == 0 do
-          market
-        else
-          {:ok, market} = Market.update(market, :add_period)
-          market
-        end
+    # periods
+    # |> Enum.with_index()
+    # |> Enum.reduce(Market.new(buyers, sellers), fn {actions, index}, market ->
+    #  market =
+    #    if index == 0 do
+    #      market
+    #    else
+    #      {:ok, market} = Market.update(market, :add_period)
+    #      market
+    #    end
 
-      Enum.reduce(actions, market, &apply_test_action/2)
-    end)
+    #  Enum.reduce(actions, market, &apply_test_action/2)
+    # end)
+    Market.new(buyers, sellers)
   end
 
   defp apply_test_action({:offer, name, price}, market) do

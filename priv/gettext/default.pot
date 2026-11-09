@@ -61,7 +61,7 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market/common_live.ex:32
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:41
 #, elixir-autogen, elixir-format
 msgid "Actors"
 msgstr ""
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market/common_live.ex:56
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:65
 #: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:161
 #, elixir-autogen, elixir-format
 msgid "Buyer"
@@ -183,8 +183,8 @@ msgstr ""
 msgid "Email changed successfully."
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market_live.ex:155
-#: lib/ecosim_web/live/sim_live/market_live.ex:173
+#: lib/ecosim_web/live/sim_live/market_live.ex:134
+#: lib/ecosim_web/live/sim_live/market_live.ex:152
 #, elixir-autogen, elixir-format
 msgid "Error"
 msgstr ""
@@ -343,7 +343,7 @@ msgstr ""
 msgid "Period %{number}"
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market_live.ex:98
+#: lib/ecosim_web/live/sim_live/market_live.ex:77
 #, elixir-autogen, elixir-format
 msgid "Price evolution per transaction"
 msgstr ""
@@ -358,7 +358,7 @@ msgstr ""
 msgid "Restart"
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market/common_live.ex:65
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:74
 #, elixir-autogen, elixir-format
 msgid "Results"
 msgstr ""
@@ -373,7 +373,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market/common_live.ex:55
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:64
 #: lib/ecosim_web/live/sim_live/market/one_for_all_mode_live.ex:155
 #, elixir-autogen, elixir-format
 msgid "Seller"
@@ -395,7 +395,7 @@ msgid "Something went wrong!"
 msgstr ""
 
 #: lib/ecosim_web/live/create_sim_live.ex:17
-#: lib/ecosim_web/live/sim_live/market/common_live.ex:22
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:23
 #, elixir-autogen, elixir-format
 msgid "Start"
 msgstr ""
@@ -410,12 +410,12 @@ msgstr ""
 msgid "The file is too large."
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market_live.ex:121
+#: lib/ecosim_web/live/sim_live/market_live.ex:100
 #, elixir-autogen, elixir-format
 msgid "The given actor does not exist."
 msgstr ""
 
-#: lib/ecosim_web/live/sim_live/market_live.ex:133
+#: lib/ecosim_web/live/sim_live/market_live.ex:112
 #, elixir-autogen, elixir-format
 msgid "The given price does not respect the actor's willingness to pay or accept."
 msgstr ""
@@ -538,4 +538,9 @@ msgstr ""
 #: lib/ecosim_web/live/user_live/registration.ex:20
 #, elixir-autogen, elixir-format
 msgid "to your account now."
+msgstr ""
+
+#: lib/ecosim_web/live/sim_live/market/common_live.ex:30
+#, elixir-autogen, elixir-format
+msgid "Use example list"
 msgstr ""
