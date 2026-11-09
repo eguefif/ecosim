@@ -129,9 +129,13 @@ defmodule EcosimWeb.Sim.MarketLive do
       {:ok, market} ->
         {:noreply, socket |> assign(:market, market)}
 
-      {:error, error} ->
-        IO.inspect(error)
-        {:noreply, socket |> put_flash(:error, gettext("Error"))}
+      {:error, :price_not_in_wt} ->
+        {:noreply,
+         socket
+         |> put_flash(
+           :error,
+           gettext("The given price does not respect the actor's willingness to pay or accept.")
+         )}
     end
   end
 
@@ -169,7 +173,13 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   def handle_event("add-period", %{}, socket) do
     {:ok, market} = Market.update(socket.assigns.market, :add_period)
-    {:noreply, assign(socket, :market, market)}
+    current_period_index = length(market.periods) - 1
+    {:noreply, assign(socket, :market, market) |> assign(:period_index, current_period_index)}
+  end
+
+  def handle_event("show-period", %{"period" => period_index}, socket) do
+    period_index = String.to_integer(period_index)
+    {:noreply, assign(socket, :period_index, period_index)}
   end
 
   def handle_event("show-day", %{"period" => period}, socket) do
@@ -291,17 +301,16 @@ defmodule EcosimWeb.Sim.MarketLive do
     Market.new(buyers, sellers)
   end
 
-  defp apply_test_action({:offer, name, price}, market) do
-    {:ok, market} =
-      Market.update(market, :offer, %{actor: Market.actor(market, name), price: price})
+  # defp apply_test_action({:offer, name, price}, market) do
+  #  {:ok, market} =
+  #    Market.update(market, :offer, %{actor: Market.actor(market, name), price: price})
 
-    market
-  end
+  #  market
+  # end
 
-  defp apply_test_action({:accept, name}, market) do
-    {:ok, market} = Market.update(market, :accept, %{actor: Market.actor(market, name)})
-    market
-  end
+  # defp apply_test_action({:accept, name}, market) do {:ok, market} = Market.update(market, :accept, %{actor: Market.actor(market, name)})
+  #  market
+  # end
 
   defp make_graph(data, _) when data == [], do: nil
 

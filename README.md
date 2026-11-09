@@ -17,7 +17,12 @@ the period's actor list.
     - [x] Graph as the one found in the 1962 article
 - [x] Extract common UI interface from the one_for_all_mode_live into a market_components
 - [ ] Improve sim action buttons
-- [ ] Add localisation
+
+### Bug
+- [ ] When displaying a transaction, sometimes a buyer is said to have sold something to a seller. We need
+to display the correct actor order depending on the actor's type.
+- [ ] When Adding a period, it should reset the list of actions
+- [ ] When clicking on a period, it should show the period
 
 
 ## Roadmap
