@@ -28,7 +28,11 @@ import topbar from "../vendor/topbar"
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken},
+  params: {
+    _csrf_token: csrfToken,
+    // Logged with sim usage as a coarse location hint (see EcosimWeb.SimLog)
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  },
   hooks: {...colocatedHooks},
 })
 

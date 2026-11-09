@@ -6,26 +6,10 @@ Ecosim is a website that provides economic simulators for high school teachers a
 ## Next TODO
 
 - [ ] Design simulation page in market_live: sim component
-- [x] Add accept action in the market_live.ex file.
-- [x] Add button undo last action
-- [x] Disable form for price when no price.
-- [x] Display events in reverse order.
-- [x] List of participants should not have person who make a transaction. This should be filtered with
-the period's actor list.
-- [x] Add a button to manually add a period
-- [x] Add result
-    - [x] Graph as the one found in the 1962 article
-- [x] Extract common UI interface from the one_for_all_mode_live into a market_components
 - [ ] In Result, show the supply and demand theoritical plots.
-- [ ] Improve sim action buttons
+- [ ] Show all price and change the UI for accepting price. Just click on the price and it shows an actor selector that will accept the price.
+- [ ] End to end test
 
-### Bug
-- [x] When displaying a transaction, sometimes a buyer is said to have sold something to a seller. We need
-to display the correct actor order depending on the actor's type.
-- [x] Click away should hide list of actors.
-- [x] When Adding a period, it should reset the list of actions
-- [x] It should always take the current period list of actors
-- [x] When clicking on a period, it should show the period
 
 
 ## Roadmap
