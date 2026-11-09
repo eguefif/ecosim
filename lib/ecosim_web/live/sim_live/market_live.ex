@@ -5,6 +5,7 @@ defmodule EcosimWeb.Sim.MarketLive do
   alias EcosimWeb.SimLive.Market.CommonLive
   alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Actor
+  alias EcosimWeb.SimLog
 
   @impl true
   def render(assigns) do
@@ -48,6 +49,7 @@ defmodule EcosimWeb.Sim.MarketLive do
     {:ok,
      socket
      |> assign(:mode, mode)
+     |> assign(:client_info, SimLog.client_info(socket))
      |> assign(:step, :preparation)
      |> assign(:actors, [])
      |> allow_upload(:actors,
@@ -67,6 +69,8 @@ defmodule EcosimWeb.Sim.MarketLive do
     sellers = actors |> Enum.filter(&(&1.type == :seller))
     market = Market.new(buyers, sellers)
 
+    log_sim_started(socket, market, :upload)
+
     {:noreply,
      assign(socket, :step, :sim)
      |> assign(:market, market)
@@ -85,8 +89,17 @@ defmodule EcosimWeb.Sim.MarketLive do
   end
 
   def handle_event("finish-sim", _, socket) do
+    results = Market.results(socket.assigns.market)
+
+    SimLog.log(:result_viewed, socket.assigns.client_info,
+      sim: "market",
+      mode: socket.assigns.mode,
+      periods: length(socket.assigns.market.periods),
+      transactions: length(results)
+    )
+
     graph =
-      Market.results(socket.assigns.market)
+      results
       |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
       |> IO.inspect()
       |> make_graph(gettext("Price evolution per transaction"))
@@ -177,6 +190,8 @@ defmodule EcosimWeb.Sim.MarketLive do
   def handle_event("user-click-default-button", %{}, socket) do
     market = build_test_market()
 
+    log_sim_started(socket, market, :example)
+
     {:noreply,
      socket
      |> assign(:market, market)
@@ -230,6 +245,16 @@ defmodule EcosimWeb.Sim.MarketLive do
     actors = parse_content(content)
 
     {:noreply, assign(socket, :actors, actors)}
+  end
+
+  defp log_sim_started(socket, market, source) do
+    SimLog.log(:started, socket.assigns.client_info,
+      sim: "market",
+      mode: socket.assigns.mode,
+      source: source,
+      buyers: length(market.buyers),
+      sellers: length(market.sellers)
+    )
   end
 
   defp parse_content(content) do
