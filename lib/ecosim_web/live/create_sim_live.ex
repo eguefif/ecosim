@@ -55,7 +55,7 @@ defmodule EcosimWeb.CreateSimLive do
       <div class={[@mode == "one-for-all" && "aura"]}>
         <div
           class={[
-            "card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out"
+            "card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out hover:pointer"
           ]}
           phx-click="choose-mode"
           phx-value-mode="one-for-all"
@@ -75,7 +75,7 @@ defmodule EcosimWeb.CreateSimLive do
 
       <div class={[@mode == "multi" && "aura"]}>
         <div
-          class="card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out"
+          class="card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out hover:pointer"
           phx-click="choose-mode"
           phx-value-mode="multi"
         >
@@ -94,7 +94,7 @@ defmodule EcosimWeb.CreateSimLive do
 
       <div class={[@mode == "bot" && "aura"]}>
         <div
-          class="card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out"
+          class="card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out hover:pointer"
           phx-click="choose-mode"
           phx-value-mode="bot"
         >

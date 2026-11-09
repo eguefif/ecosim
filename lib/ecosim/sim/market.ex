@@ -89,8 +89,9 @@ defmodule Ecosim.Sim.Market do
                       price is below WTA.
   """
   @spec update(t(), :add_period) :: {:ok, t()}
-  @spec update(t(), :accept, accept_params()) :: {:ok, t()} | {:error, :price_not_in_wt}
-  @spec update(t(), :offer, Action.offer_params()) ::
+  @spec update(t(), :accept, accept_params(), integer()) ::
+          {:ok, t()} | {:error, :price_not_in_wt}
+  @spec update(t(), :offer, Action.offer_params(), integer()) ::
           {:ok, t()} | {:error, :price_not_in_wt}
   def update(%__MODULE__{} = market, :add_period) do
     {:ok,
@@ -100,15 +101,17 @@ defmodule Ecosim.Sim.Market do
      }}
   end
 
-  def update(%__MODULE__{} = market, :accept, %{actor: actor}) do
-    period = List.last(market.periods)
-
-    market
-    |> get_actor_list(actor)
-    |> add_transaction(market, actor, period)
+  def update(%__MODULE__{} = market, action, params) do
+    update(market, action, params, -1)
   end
 
-  def update(%__MODULE__{} = market, :offer, %{actor: actor, price: price} = params) do
+  def update(%__MODULE__{} = market, :accept, %{actor: actor}, period_index) do
+    market
+    |> get_actor_list(actor)
+    |> add_transaction(market, actor, period_index)
+  end
+
+  def update(%__MODULE__{} = market, :offer, %{actor: actor, price: price} = params, period_index) do
     action = get_specific_action(market, actor)
 
     if Actor.price_regarding_wt?(actor, price) do
@@ -116,7 +119,7 @@ defmodule Ecosim.Sim.Market do
        %{
          market
          | periods:
-             List.update_at(market.periods, -1, fn period ->
+             List.update_at(market.periods, period_index, fn period ->
                Period.add_action(period, action, params)
              end)
        }}
@@ -138,8 +141,11 @@ defmodule Ecosim.Sim.Market do
     end
   end
 
-  @spec add_transaction([Actor.t()], t(), Actor.t(), Period.t()) :: {:ok, t()} | {:error, atom()}
-  defp add_transaction(actor_list, market, actor, period) do
+  @spec add_transaction([Actor.t()], t(), Actor.t(), integer()) ::
+          {:ok, t()} | {:error, atom()}
+  defp add_transaction(actor_list, market, actor, period_index) do
+    period = Enum.at(market.periods, period_index)
+
     case Period.get_last_offer_from(period, actor_list) do
       :none ->
         {:ok, market}
@@ -150,7 +156,7 @@ defmodule Ecosim.Sim.Market do
            %{
              market
              | periods:
-                 List.update_at(market.periods, -1, fn period ->
+                 List.update_at(market.periods, period_index, fn period ->
                    Period.add_action(period, :accept, %{
                      actors: [actor, actor2],
                      price: price
@@ -184,17 +190,22 @@ defmodule Ecosim.Sim.Market do
   Remove the last action.
   """
   @spec undo(t()) :: t()
-  def undo(%__MODULE__{} = market) do
+  def undo(%__MODULE__{} = market, period_index \\ -1) do
     periods =
-      List.update_at(market.periods, -1, fn period ->
+      List.update_at(market.periods, period_index, fn period ->
         period |> Period.remove_last_action()
       end)
 
     %{market | periods: periods}
   end
 
-  def active_actors(%__MODULE__{} = market) do
-    period = Enum.at(market.periods, -1)
+  @doc """
+  Returns the list of active actors for the given period.
+  An active is one that has not been yet involved in a transaction.
+  """
+  @spec active_actors(t(), integer()) :: [Actor.t()]
+  def active_actors(%__MODULE__{} = market, period \\ -1) do
+    period = Enum.at(market.periods, period)
     actors = market.sellers ++ market.buyers
     Enum.filter(actors, fn actor -> actor in period.actors end)
   end

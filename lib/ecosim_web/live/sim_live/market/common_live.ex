@@ -72,23 +72,38 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
 
   def result(assigns) do
     ~H"""
-    <div>{gettext("Results")}</div>
+    <div class="text-lg font-bold">{gettext("3 - Result")}</div>
     {@graph}
     """
   end
 
-  def show_sim_action_buttons(assigns) do
+  slot :inner_block
+
+  def(show_sim_action_buttons(assigns)) do
     ~H"""
-    <div class="flex flex-row gap-[16px] self-center">
-      <div class="btn btn-primary" phx-click="back-to-preparation">{gettext("Back")}</div>
-      <div class="btn btn-warning" phx-click="restart-sim">{gettext("Restart")}</div>
-      <div class="btn btn-primary" phx-click="finish-sim">{gettext("Finish")}</div>
-      <div class="btn btn-warning" phx-click="undo-last-action">{gettext("Undo")}</div>
+    <div class="flex flex-col gap-[8px] shadow-md p-[32px]">
+      <div class="flex flex-row justify-around">
+        <div class="btn btn-warning gap-2" phx-click="restart-sim">
+          <.icon name="hero-arrow-path" class="size-5" />
+          {gettext("Reset")}
+        </div>
+        <div class="btn btn-primary gap-2" phx-click="finish-sim">
+          <.icon name="hero-flag" class="size-5" />
+          {gettext("Finish")}
+        </div>
+        <div class="btn btn-warning gap-2" phx-click="undo-last-action">
+          <.icon name="hero-arrow-uturn-left" class="size-5" />
+          {gettext("Undo")}
+        </div>
+      </div>
+      <div class="divider"></div>
+      {render_slot(@inner_block)}
     </div>
     """
   end
 
   attr :periods, :integer
+  attr :current_period, :integer
 
   def show_periods(assigns) do
     ~H"""
@@ -97,6 +112,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
       <div
         :for={n <- 0..(@periods - 1)}
         class="btn btn-info"
+        disabled={@current_period == n}
         phx-click="show-period"
         phx-value-period={n}
       >
@@ -135,7 +151,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
     >
       <:action_row :let={[actor1, actor2, price]}>
         <div class="shadow-md p-[16px] rounded-lg text-center bg-transaction" ,>
-          {transaction_text(actor1.name, actor2.name, price)}
+          {transaction_text(actor1, actor2, price)}
         </div>
       </:action_row>
     </.show_actions>
@@ -214,7 +230,14 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   # Sentences are translated as a whole (word order differs between languages).
   # Interpolated values are HTML-escaped and rendered in bold; the translated
   # templates themselves come from our own .po files.
-  defp transaction_text(seller, buyer, price) do
+  defp transaction_text(actor1, actor2, price) do
+    {seller, buyer} =
+      if actor1.type == :seller do
+        {actor1.name, actor2.name}
+      else
+        {actor2.name, actor1.name}
+      end
+
     gettext("%{seller} sells to %{buyer} at the price of %{price}",
       seller: bold(seller),
       buyer: bold(buyer),

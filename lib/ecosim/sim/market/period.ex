@@ -78,7 +78,9 @@ defmodule Ecosim.Sim.Market.Period do
   Remove the last action in the action's list.
   """
   @spec remove_last_action(t()) :: t()
-  def remove_last_action(%__MODULE__{} = period) do
+  def remove_last_action(%__MODULE__{} = period) when length(period.actions) == 0, do: period
+
+  def remove_last_action(%__MODULE__{} = period) when length(period.actions) != 0 do
     {action, rest} = List.pop_at(period.actions, -1)
 
     actors =
