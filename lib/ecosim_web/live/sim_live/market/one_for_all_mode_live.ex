@@ -114,7 +114,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             phx-value-model="2"
           >
             <figure class="rounded-xl">
-              <img src={~p"/images/market1.png"} alt="market" class="object-cover" />
+              <img src={~p"/images/market2.png"} alt="market" class="object-cover" />
             </figure>
           </div>
         </div>
@@ -129,7 +129,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             phx-value-model="3"
           >
             <figure class="rounded-xl">
-              <img src={~p"/images/market1.png"} alt="market" class="object-cover" />
+              <img src={~p"/images/market3.png"} alt="market" class="object-cover" />
             </figure>
           </div>
         </div>

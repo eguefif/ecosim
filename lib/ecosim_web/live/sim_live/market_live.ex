@@ -4,7 +4,6 @@ defmodule EcosimWeb.Sim.MarketLive do
   alias EcosimWeb.SimLive.OneForAllModeLive, as: OneMode
   alias EcosimWeb.SimLive.Market.CommonLive
   alias Ecosim.Sim.Market
-  alias Ecosim.Sim.Market.Actor
   alias EcosimWeb.SimLog
 
   @impl true
@@ -72,13 +71,8 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def handle_event("start", _, socket) do
-    actors =
-      socket.assigns.actors
-      |> Enum.map(&Actor.new/1)
-
-    buyers = actors |> Enum.filter(&(&1.type == :buyer))
-    sellers = actors |> Enum.filter(&(&1.type == :seller))
-    market = Market.new(buyers, sellers)
+    market = Market.new(socket.assigns.actors, socket.assigns.market_model)
+    IO.inspect(market)
 
     log_sim_started(socket, market, :upload)
 
@@ -275,96 +269,13 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   defp parse_content(content) do
     content
-    |> String.split("\n", trim: true)
-    |> Enum.map(&(String.split(&1, ",") |> Enum.map(fn entry -> String.trim(entry) end)))
+    |> String.split(",", trim: true)
   end
 
-  # TODO: remove with the hardcoded test data in `mount/3`.
-  # Builds a market with 4 periods. WTA: Alice 12, Bruno 15, Chloé 20.
-  # WTB: David 25, Émilie 18, François 10. Theoretical equilibrium: 2 transactions
-  # at a price between 15 and 18. Prices are dispersed in period 1 and converge to 16.
   defp build_test_market do
-    buyers = [
-      Actor.new(:buyer, "David", 25),
-      Actor.new(:buyer, "Émilie", 18),
-      Actor.new(:buyer, "François", 10)
-    ]
+    actors = ["Alice", "Bruno", "Chloé", "David", "Émilie", "François"]
 
-    sellers = [
-      Actor.new(:seller, "Alice", 12),
-      Actor.new(:seller, "Bruno", 15),
-      Actor.new(:seller, "Chloé", 20)
-    ]
-
-    # periods = [
-    #  # Period 1: David accepts Bruno at 20, Alice accepts Émilie at 17
-    #  [
-    #    {:offer, "Alice", 22},
-    #    {:offer, "David", 14},
-    #    {:offer, "Bruno", 20},
-    #    {:accept, "David"},
-    #    {:offer, "Émilie", 15},
-    #    {:offer, "Alice", 19},
-    #    {:offer, "Émilie", 17},
-    #    {:accept, "Alice"},
-    #    {:offer, "Chloé", 24},
-    #    {:offer, "François", 8},
-    #    {:offer, "Chloé", 22},
-    #    {:offer, "François", 10}
-    #  ],
-    #  # Period 2: David accepts Alice at 17, Émilie accepts Bruno at 17
-    #  [
-    #    {:offer, "Bruno", 19},
-    #    {:offer, "Émilie", 14},
-    #    {:offer, "Alice", 18},
-    #    {:offer, "David", 16},
-    #    {:offer, "Alice", 17},
-    #    {:accept, "David"},
-    #    {:offer, "Émilie", 15},
-    #    {:offer, "Bruno", 17},
-    #    {:accept, "Émilie"},
-    #    {:offer, "Chloé", 22},
-    #    {:offer, "François", 10}
-    #  ],
-    #  # Period 3: Bruno accepts Émilie at 16, Alice accepts David at 16
-    #  [
-    #    {:offer, "David", 15},
-    #    {:offer, "Bruno", 18},
-    #    {:offer, "Émilie", 16},
-    #    {:accept, "Bruno"},
-    #    {:offer, "Alice", 17},
-    #    {:offer, "David", 16},
-    #    {:accept, "Alice"},
-    #    {:offer, "Chloé", 21},
-    #    {:offer, "François", 9}
-    #  ],
-    #  # Period 4: Émilie accepts Bruno at 16, Alice accepts David at 16
-    #  [
-    #    {:offer, "Alice", 17},
-    #    {:offer, "Émilie", 16},
-    #    {:offer, "Bruno", 16},
-    #    {:accept, "Émilie"},
-    #    {:offer, "David", 16},
-    #    {:accept, "Alice"},
-    #    {:offer, "Chloé", 20},
-    #    {:offer, "François", 10}
-    #  ]
-    # ]
-
-    # periods
-    # |> Enum.with_index()
-    # |> Enum.reduce(Market.new(buyers, sellers), fn {actions, index}, market ->
-    #  market =
-    #    if index == 0 do
-    #      market
-    #    else
-    #      {:ok, market} = Market.update(market, :add_period)
-    #      market
-    #    end
-
-    #  Enum.reduce(actions, market, &apply_test_action/2)
-    # end)
-    Market.new(buyers, sellers)
+    Market.new(actors, 1)
   end
 
   # defp apply_test_action({:offer, name, price}, market) do

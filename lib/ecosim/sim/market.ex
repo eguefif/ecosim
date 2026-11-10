@@ -41,9 +41,11 @@ defmodule Ecosim.Sim.Market do
 
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
+  Or it creates a Market with one period from a list of name and a market model.
+  The market model with define what WTs distribution to use.
   """
   @spec new(buyers(), sellers()) :: t()
-  def new(buyers, sellers) do
+  def new(buyers, sellers) when is_list(buyers) and is_list(sellers) do
     period = Period.new(buyers ++ sellers)
 
     %__MODULE__{
@@ -51,6 +53,68 @@ defmodule Ecosim.Sim.Market do
       sellers: sellers,
       periods: [period]
     }
+  end
+
+  @spec new([String.t()], integer()) :: t()
+  def new(actors, market_model) when is_integer(market_model) and is_list(actors) do
+    {buyers, sellers} =
+      actors
+      |> spread_actors_between_sellers_and_buyers()
+      |> IO.inspect()
+      |> build_wts(market_model)
+
+    period = Period.new(buyers ++ sellers)
+
+    %__MODULE__{
+      buyers: buyers,
+      sellers: sellers,
+      periods: [period]
+    }
+  end
+
+  @spec spread_actors_between_sellers_and_buyers([String.t()]) :: {[String.t()], [String.t()]}
+  defp(spread_actors_between_sellers_and_buyers(actors)) do
+    half = div(length(actors), 2)
+
+    actors
+    |> Enum.shuffle()
+    |> Enum.split(half)
+  end
+
+  @spec build_wts({[String.t()], [String.t()]}, integer()) :: {[Actor.t()], [Actor.t()]}
+  defp build_wts({buyers, sellers}, market_model) do
+    {price, step} = define_market_features(market_model, length(buyers) + length(sellers))
+    {create_buyers(buyers, price, step), create_sellers(sellers, price, step)}
+  end
+
+  @spec define_market_features(integer(), integer()) :: {integer(), number()}
+  defp define_market_features(1, size) do
+    price = :rand.uniform(100 - div(size, 2))
+    step = 30 / size
+
+    {price, step}
+  end
+
+  @spec create_buyers(integer(), integer(), number()) :: [Actor.t()]
+  defp create_buyers(buyers, price, step) do
+    start = price + length(buyers) * step
+
+    buyers
+    |> Enum.map_reduce(start, fn name, wt ->
+      {Actor.new(:buyer, name, wt), wt - step}
+    end)
+    |> elem(0)
+  end
+
+  @spec create_sellers(integer(), integer(), number()) :: [Actor.t()]
+  defp create_sellers(sellers, price, step) do
+    start = price - length(sellers) * step
+
+    sellers
+    |> Enum.map_reduce(start, fn name, wt ->
+      {Actor.new(:seller, name, wt), wt + step}
+    end)
+    |> elem(0)
   end
 
   @doc """
