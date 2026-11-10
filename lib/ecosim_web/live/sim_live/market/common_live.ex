@@ -7,11 +7,16 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   attr :mode, :string
   attr :uploads, :map, required: true
   attr :actors, :list
+  attr :market_model, :integer, default: -1
 
   def preparation(assigns) do
     ~H"""
     <div class="flex flex-col gap-[8px]">
-      <OneMode.preparation_one_for_all_mode :if={@mode == "one-for-all"} uploads={@uploads} />
+      <OneMode.preparation_one_for_all_mode
+        :if={@mode == "one-for-all"}
+        uploads={@uploads}
+        market_model={@market_model}
+      />
 
       <.show_actors :if={@actors != []} actors={@actors} />
       <div class="flex flex-row gap-[8px] justify-around">
@@ -68,12 +73,17 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
     end
   end
 
-  attr :graph, :any
+  attr :result_graph, :any
+  attr :market_graph, :any
 
   def result(assigns) do
     ~H"""
-    <div class="text-lg font-bold">{gettext("3 - Result")}</div>
-    {@graph}
+    <div class="flex flex-col gap-[32px]">
+      <div class="text-lg font-bold">{gettext("3 - Results")}</div>
+      <div class="flex flex-row gap[-32px] justify-around">
+        {@result_graph}
+      </div>
+    </div>
     """
   end
 

@@ -6,25 +6,28 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   alias EcosimWeb.SimLive.Market.CommonLive
 
   attr :uploads, :map, required: true
+  attr :market_model, :integer, default: -1
 
   def preparation_one_for_all_mode(assigns) do
     ~H"""
     <div class="flex flex-col gap-[16px]">
       <h2 class="text-lg font-bold">{gettext("1 - Preparation")}</h2>
-      {gettext(
-        "This mode requires some preparation. Each of your users must know their role and their willingness to pay or accept (WTP, WTA). Please provide a text or csv file formatted like this:"
-      )}<br />
-      <pre id="preparation-file-example" class="mt-2 rounded-lg bg-base-200 p-4 font-mono text-sm">{preparation_example()}</pre>
-      <ul class="mt-2 text-sm">
+      {gettext("This mode requires some preparation:")}<br />
+      <ul>
         <li>
-          <strong>{gettext("seller, name, WTA")}</strong>
-          : {gettext("WTA = willingness to accept (minimum accepted price)")}
+          1. {gettext("Upload a file containing the participants' names, separated by commas.")}
         </li>
         <li>
-          <strong>{gettext("buyer, name, WTP")}</strong>
-          : {gettext("WTP = willingness to pay (maximum accepted price)")}
+          2. {gettext(
+            "Choose a supply and demand graph to define the willingness to accept and to pay (WTA and WTP)."
+          )}
         </li>
+        <li>
+          3. {gettext("Generate the distribution of sellers and buyers with their WTA and WTP.")}
+        </li>
+        <li>4. {gettext("Give each participant their role and their WTA or WTP.")}</li>
       </ul>
+      <pre id="preparation-file-example" class="mt-2 rounded-lg bg-base-200 p-4 font-mono text-sm">{preparation_example()}</pre>
 
       <form
         id="actors-upload-form"
@@ -65,6 +68,8 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
           {upload_error_to_string(err)}
         </p>
 
+        <.show_market_model_choices market_choice={@market_model} />
+
         <button
           type="submit"
           id="actors-upload-submit"
@@ -74,6 +79,61 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
           {gettext("Upload")}
         </button>
       </form>
+    </div>
+    """
+  end
+
+  attr :market_choice, :integer, default: 1
+
+  def show_market_model_choices(assigns) do
+    ~H"""
+    <div class="flex flex-col gap-[32px]">
+      <div class="flex flex-row gap-[32px]">
+        <div class={[
+          @market_choice == 1 && "aura",
+          @market_choice != 1 && "hover:scale-104 duration-200 transform-transition ease-in-out"
+        ]}>
+          <div
+            class="card shadow-md rounded-lg p-1 w-[256px]"
+            phx-click="select-model"
+            phx-value-model="1"
+          >
+            <figure class="rounded-xl">
+              <img src={~p"/images/market1.png"} alt="market" class="object-cover" />
+            </figure>
+          </div>
+        </div>
+
+        <div class={[
+          @market_choice == 2 && "aura",
+          @market_choice != 2 && "hover:scale-104 duration-200 transform-transition ease-in-out"
+        ]}>
+          <div
+            class="card shadow-md rounded-lg p-1 w-[256px]"
+            phx-click="select-model"
+            phx-value-model="2"
+          >
+            <figure class="rounded-xl">
+              <img src={~p"/images/market1.png"} alt="market" class="object-cover" />
+            </figure>
+          </div>
+        </div>
+
+        <div class={[
+          @market_choice == 3 && "aura",
+          @market_choice != 3 && "hover:scale-104 duration-200 transform-transition ease-in-out"
+        ]}>
+          <div
+            class="card shadow-md rounded-lg p-1 w-[256px]"
+            phx-click="select-model"
+            phx-value-model="3"
+          >
+            <figure class="rounded-xl">
+              <img src={~p"/images/market1.png"} alt="market" class="object-cover" />
+            </figure>
+          </div>
+        </div>
+      </div>
     </div>
     """
   end
@@ -190,18 +250,7 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
   end
 
   defp preparation_example do
-    seller = gettext("seller")
-    buyer = gettext("buyer")
-
-    [
-      {seller, "Alice", 12},
-      {seller, "Bruno", 15},
-      {seller, "Chloé", 20},
-      {buyer, "David", 25},
-      {buyer, "Émilie", 18},
-      {buyer, "François", 10}
-    ]
-    |> Enum.map_join("\n", fn {type, name, wt} -> "#{type}, #{name}, #{wt}" end)
+    "Alice, Bruno, Chloé, David, Émilie, François"
   end
 
   defp upload_error_to_string(:too_large), do: gettext("The file is too large.")
