@@ -73,7 +73,8 @@ config :tailwind,
 
 # Configure Elixir's Logger
 config :logger, :default_formatter,
-  format: "$time $metadata[$level] $message\n",
+  format: {Ecosim.LogFormatter, :format},
+  utc_log: true,
   metadata: [:request_id]
 
 # Use Jason for JSON parsing in Phoenix
