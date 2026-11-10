@@ -10,6 +10,9 @@ defmodule EcosimWeb.SimLog do
   Client information can only be read during `mount/3` (see
   `Phoenix.LiveView.get_connect_info/2`), so LiveViews call `client_info/1` in
   `mount/3`, keep the result in an assign and pass it to `log/3` later.
+
+  Logging can be turned off with `config :ecosim, EcosimWeb.SimLog, enabled: false`
+  (done in `config/test.exs`).
   """
 
   require Logger
@@ -50,6 +53,14 @@ defmodule EcosimWeb.SimLog do
   """
   @spec log(atom(), client_info(), keyword()) :: :ok
   def log(event, client_info, fields \\ []) do
+    if enabled?(), do: do_log(event, client_info, fields), else: :ok
+  end
+
+  defp enabled? do
+    :ecosim |> Application.get_env(__MODULE__, []) |> Keyword.get(:enabled, true)
+  end
+
+  defp do_log(event, client_info, fields) do
     Logger.info(fn ->
       client_fields = [
         ip: client_info.ip,

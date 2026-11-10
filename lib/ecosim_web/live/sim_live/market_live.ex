@@ -15,7 +15,7 @@ defmodule EcosimWeb.Sim.MarketLive do
         {gettext("Market")} - ({get_mode(@mode)})
         <:subtitle>
           <.link navigate="https://www.researchgate.net/publication/24106520_An_Experimental_Study_of_Competitive_Market_Behavior">
-            {gettext("Based on Veron Smith 1962 paper")}
+            {gettext("Based on Vernon Smith's 1962 paper")}
           </.link>
         </:subtitle>
         <:actions>
@@ -31,11 +31,16 @@ defmodule EcosimWeb.Sim.MarketLive do
         mode={@mode}
         uploads={@uploads}
         actors={@actors}
+        market_model={@market_model}
       />
 
       <OneMode.sim :if={@step == :sim} market={@market} period_index={@period_index} />
 
-      <CommonLive.result :if={@step == :result} graph={@graph} />
+      <CommonLive.result
+        :if={@step == :result}
+        result_graph={@result_graph}
+        market_graph={@market_graph}
+      />
     </Layouts.app>
     """
   end
@@ -52,11 +57,17 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:client_info, SimLog.client_info(socket))
      |> assign(:step, :preparation)
      |> assign(:actors, [])
+     |> assign(:market_model, 1)
      |> allow_upload(:actors,
        accept: ~w(.txt .csv),
        max_entries: 1,
        max_file_size: 1_000_000
      )}
+  end
+
+  def handle_event("select-model", %{"model" => market_model}, socket) do
+    market_model = String.to_integer(market_model)
+    {:noreply, socket |> assign(:market_model, market_model)}
   end
 
   @impl true
@@ -101,10 +112,15 @@ defmodule EcosimWeb.Sim.MarketLive do
     graph =
       results
       |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
-      |> IO.inspect()
       |> make_graph(gettext("Price evolution per transaction"))
 
-    {:noreply, assign(socket, :step, :result) |> assign(:graph, graph)}
+    market_graph =
+      make_market_graph(socket.assigns.market.buyers ++ socket.assigns.market.sellers)
+
+    {:noreply,
+     assign(socket, :step, :result)
+     |> assign(:result_graph, graph)
+     |> assign(:market_graph, market_graph)}
   end
 
   def handle_event("restart-sim", _, socket) do
@@ -378,5 +394,9 @@ defmodule EcosimWeb.Sim.MarketLive do
     Contex.Plot.new(600, 400, chart)
     |> Contex.Plot.titles(title, "")
     |> Contex.Plot.to_svg()
+  end
+
+  defp make_market_graph(_actors) do
+    nil
   end
 end
