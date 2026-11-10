@@ -11,6 +11,19 @@ Ecosim is a website that provides economic simulators for high school teachers a
 - [ ] End to end test
 
 
+### Refactor Market
+
+ - [ ] User chooses a demand and offer market model
+ - [ ] We pass to Market.new the list of name and market model and it generates the actors itsef
+    - [ ] Refactor Market.new to take a list of names only and equaly distribute among seller and buyer and use prefedined WT
+    - [ ] Refactor UI: display all offers all the time: can click on offer and select
+    buyer or seller
+    - [ ] Reset all price when transaction done
+    - [ ] Keep list of actions and transaction
+    - [ ] Add the market model for model 1
+    - [ ] Add the market model for model 2
+    - [ ] Add the market model for model 3
+
 
 ## Roadmap
 
