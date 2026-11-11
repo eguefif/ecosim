@@ -81,6 +81,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
 
   attr :market, Market
   attr :period_index, :integer, default: 0
+  attr :offer_focus_actor_name, :string
 
   def sim(assigns) do
     ~H"""
@@ -92,6 +93,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
       <.show_current_period
         info={Enum.at(@market.periods, @period_index) |> Period.info()}
         actors={Market.active_actors(@market, @period_index)}
+        offer_focus_actor_name={@offer_focus_actor_name}
       />
     </div>
     """
@@ -168,20 +170,31 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
 
   attr :info, :map
   attr :actors, :list
+  attr :offer_focus_actor_name, :string, default: nil
 
   def show_current_period(assigns) do
     ~H"""
     <div class="flex flex-row gap-[32px]">
-      <.show_buyers_prices offers={@info.buyers_prices} />
+      <.show_buyers_prices
+        offers={@info.buyers_prices}
+        offer_focus_actor_name={@offer_focus_actor_name}
+        actors={Enum.filter(@actors, &(&1.type == :seller)) |> Enum.map(& &1.name)}
+      />
       <div class="divider divider-horizontal"></div>
       <.show_transactions transactions={@info.transactions} />
       <div class="divider divider-horizontal"></div>
-      <.show_sellers_prices offers={@info.sellers_prices} />
+      <.show_sellers_prices
+        offers={@info.sellers_prices}
+        offer_focus_actor_name={@offer_focus_actor_name}
+        actors={Enum.filter(@actors, &(&1.type == :buyer)) |> Enum.map(& &1.name)}
+      />
     </div>
     """
   end
 
   attr :offers, :list
+  attr :actors, :list
+  attr :offer_focus_actor_name, :string
 
   def show_buyers_prices(assigns) do
     ~H"""
@@ -191,9 +204,15 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
       <div class="flex flex-col gap-[8px]">
         <div
           :for={offer <- @offers}
-          class="bg-buyer shadow-md p-[16px] rounded-lg"
+          class="bg-buyer shadow-md p-[16px] rounded-lg hover:scale-104 duration-200 transform-transition ease-in-out pointer"
+          phx-click="user-click-offer"
+          phx-click-away="user-click-away-from-offer"
+          phx-value-offer={offer.params.actor.name}
         >
           {action_text(:buy_at, offer.params.actor.name, offer.params.price)}
+          <div :if={@offer_focus_actor_name == offer.params.actor.name}>
+            <.show_select_transaction_form actors={@actors} type="seller" price={offer.params.price} />
+          </div>
         </div>
       </div>
     </div>
@@ -201,6 +220,8 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   end
 
   attr :offers, :list
+  attr :actors, :list
+  attr :offer_focus_actor_name, :string
 
   def show_sellers_prices(assigns) do
     ~H"""
@@ -210,12 +231,41 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
       <div class="flex flex-col gap-[8px]">
         <div
           :for={offer <- @offers}
-          class="bg-seller shadow-md p-[16px] rounded-lg"
+          class="bg-seller shadow-md p-[16px] rounded-lg  hover:scale-104 duration-200 transform-transition ease-in-out pointer"
+          phx-click="user-click-offer"
+          phx-click-away="user-click-away-from-offer"
+          phx-value-offer={offer.params.actor.name}
         >
           {action_text(:sell_at, offer.params.actor.name, offer.params.price)}
+          <div :if={@offer_focus_actor_name == offer.params.actor.name}>
+            <.show_select_transaction_form
+              actors={@actors}
+              type="buyer"
+              price={offer.params.price}
+            />
+          </div>
         </div>
       </div>
     </div>
+    """
+  end
+
+  attr :actors, :list
+  attr :type, :string
+  attr :price, :any
+
+  def show_select_transaction_form(assigns) do
+    ~H"""
+    <form id={"select-transaction-form-#{@type}"} phx-change="accept-price">
+      <.input type="hidden" name="price" value={@price} />
+      <.input
+        type="select"
+        name={"actors-input-#{@type}"}
+        value=""
+        prompt={gettext("Choose")}
+        options={@actors}
+      />
+    </form>
     """
   end
 
@@ -229,7 +279,7 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
       <div class="flex flex-col gap-[8px]">
         <div
           :for={
-            %Action{action: :accept, params: %{actors: [actor1, actor2], price: price}} <-
+            %Action{action: :transact, params: %{actors: [actor1, actor2], price: price}} <-
               @transactions
           }
           class="bg-transaction shadow-md p-[16px] rounded-lg"

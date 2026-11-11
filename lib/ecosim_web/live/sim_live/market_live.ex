@@ -3,6 +3,7 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   alias EcosimWeb.SimLive.Market.CommonLive
   alias Ecosim.Sim.Market
+  alias Ecosim.Sim.Market.Actor
   alias EcosimWeb.SimLog
 
   @impl true
@@ -32,7 +33,12 @@ defmodule EcosimWeb.Sim.MarketLive do
         market_model={@market_model}
       />
 
-      <CommonLive.sim :if={@step == :sim} market={@market} period_index={@period_index} />
+      <CommonLive.sim
+        :if={@step == :sim}
+        market={@market}
+        period_index={@period_index}
+        offer_focus_actor_name={@offer_focus_actor_name}
+      />
 
       <CommonLive.result
         :if={@step == :result}
@@ -62,11 +68,20 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:period_index, 0)
      |> assign(:actors, [])
      |> assign(:market_model, 1)
+     |> assign(:offer_focus_actor_name, nil)
      |> allow_upload(:actors,
        accept: ~w(.txt .csv),
        max_entries: 1,
        max_file_size: 1_000_000
      )}
+  end
+
+  def handle_event("user-click-offer", %{"offer" => offer}, socket) do
+    {:noreply, socket |> assign(:offer_focus_actor_name, offer)}
+  end
+
+  def handle_event("user-click-away-from-offer", _, socket) do
+    {:noreply, socket |> assign(:offer_focus_actor_name, nil)}
   end
 
   def handle_event("select-model", %{"model" => market_model}, socket) do
@@ -160,46 +175,36 @@ defmodule EcosimWeb.Sim.MarketLive do
     end
   end
 
+  def handle_event("accept-price", %{"actors-input-seller" => ""}, socket),
+    do: {:noreply, socket}
+
+  def handle_event("accept-price", %{"actors-input-buyer" => ""}, socket),
+    do: {:noreply, socket}
+
   def handle_event(
         "accept-price",
-        %{"actors-input-seller" => actor},
+        %{"actors-input-seller" => actor, "price" => price},
         socket
       ) do
     market = socket.assigns.market
     period_index = socket.assigns.period_index
-    actor = Market.actor(market, actor)
+    seller = Market.actor(market, actor)
+    buyer = Market.actor(market, socket.assigns.offer_focus_actor_name)
 
-    case Market.update(market, :accept, %{actor: actor}, period_index) do
-      {:ok, market} ->
-        {:noreply, socket |> assign(:market, market)}
-
-      {:error, :price_not_in_wt} ->
-        {:noreply,
-         socket
-         |> put_flash(
-           :error,
-           gettext("The given price does not respect the actor's willingness to pay or accept.")
-         )}
-    end
+    handle_accept(market, seller, buyer, price, period_index, socket)
   end
 
   def handle_event(
         "accept-price",
-        %{"actors-input-buyer" => actor},
+        %{"actors-input-buyer" => actor, "price" => price},
         socket
       ) do
     market = socket.assigns.market
     period_index = socket.assigns.period_index
-    actor = Market.actor(market, actor)
+    buyer = Market.actor(market, actor)
+    seller = Market.actor(market, socket.assigns.offer_focus_actor_name)
 
-    case Market.update(market, :accept, %{actor: actor}, period_index) do
-      {:ok, market} ->
-        {:noreply, socket |> assign(:market, market)}
-
-      {:error, error} ->
-        IO.inspect(error)
-        {:noreply, socket |> put_flash(:error, gettext("Error"))}
-    end
+    handle_accept(market, seller, buyer, price, period_index, socket)
   end
 
   def handle_event("user-click-default-button", %{}, socket) do
@@ -301,7 +306,46 @@ defmodule EcosimWeb.Sim.MarketLive do
     |> Contex.Plot.to_svg()
   end
 
+  defp parse_price(price) when is_number(price), do: price
+
+  defp parse_price(price) when is_binary(price) do
+    case Float.parse(price) do
+      {number, _} -> if number == trunc(number), do: trunc(number), else: number
+      :error -> 0
+    end
+  end
+
   defp make_market_graph(_actors) do
     nil
+  end
+
+  # @spec handle_accept(Market.t(), Actor.t(), Actor.t(), number(), integer()) :: {:noreply, }
+  defp handle_accept(
+         %Market{} = market,
+         %Actor{} = seller,
+         %Actor{} = buyer,
+         price,
+         period_index,
+         socket
+       ) do
+    price = parse_price(price)
+
+    case Market.update(
+           market,
+           :accept,
+           %{seller: seller, buyer: buyer, price: price},
+           period_index
+         ) do
+      {:ok, market} ->
+        {:noreply, socket |> assign(:market, market)}
+
+      {:error, :price_not_in_wt} ->
+        {:noreply,
+         socket
+         |> put_flash(
+           :error,
+           gettext("The given price does not respect the actor's willingness to pay or accept.")
+         )}
+    end
   end
 end
