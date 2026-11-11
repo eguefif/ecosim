@@ -1,10 +1,6 @@
 defmodule EcosimWeb.SimLive.OneForAllModeLive do
   use EcosimWeb, :live_view
 
-  alias Ecosim.Sim.Market
-  alias Ecosim.Sim.Market.Period
-  alias EcosimWeb.SimLive.Market.CommonLive
-
   attr :uploads, :map, required: true
   attr :market_model, :integer, default: -1
 
@@ -133,117 +129,6 @@ defmodule EcosimWeb.SimLive.OneForAllModeLive do
             </figure>
           </div>
         </div>
-      </div>
-    </div>
-    """
-  end
-
-  attr :market, Market
-  attr :period_index, :integer, default: 0
-
-  def sim(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-[32px]">
-      <CommonLive.show_sim_action_buttons>
-        <.show_add_action_form actors={Market.active_actors(@market, @period_index)} />
-      </CommonLive.show_sim_action_buttons>
-      <CommonLive.show_periods periods={length(@market.periods)} current_period={@period_index} />
-      <.show_current_period
-        info={Enum.at(@market.periods, @period_index) |> Period.info()}
-        actors={Market.active_actors(@market, @period_index)}
-      />
-    </div>
-    """
-  end
-
-  attr :actors, :list
-
-  def show_add_action_form(assigns) do
-    ~H"""
-    <div class="p-[16px] flex justify-center">
-      <form id="one-for-all-add-action-form" phx-submit="add-action">
-        <div class="flex flex-row gap-[8px]">
-          <.live_component
-            module={EcosimWeb.SimLive.Market.InputAutocompleteComponent}
-            id="actor-input"
-            actors={@actors}
-          />
-          <input
-            id="price"
-            name="price"
-            type="text"
-            class="input w-[64px]"
-            placeholder={gettext("price")}
-          />
-          <button type="submit" class="btn btn-primary">{gettext("Add")}</button>
-        </div>
-      </form>
-    </div>
-    """
-  end
-
-  attr :info, :map
-  attr :actors, :list
-
-  def show_current_period(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-[32px]">
-      <div class="flex flex-row justify-around w-[640]">
-        <.show_price
-          price={@info.last_seller_price}
-          kind="seller"
-          label={gettext("Seller")}
-          actors={@actors |> Enum.filter(&(&1.type == :buyer))}
-        />
-        <.show_price
-          price={@info.last_buyer_price}
-          kind="buyer"
-          label={gettext("Buyer")}
-          actors={
-            @actors
-            |> Enum.filter(&(&1.type == :seller))
-          }
-        />
-      </div>
-      <div class="divider"></div>
-      <CommonLive.show_events info={@info} />
-    </div>
-    """
-  end
-
-  attr :kind, :string, required: true, doc: "seller or buyer, used for ids and event params"
-  attr :label, :string
-  attr :price, :any
-  attr :actors, :list
-
-  def show_price(assigns) do
-    ~H"""
-    <div class="card card-lg shadow-md w-[192px]">
-      <div class="card-body items-center flex flex-col gap-[8px]">
-        <div class="card-title">{@label}</div>
-        <p>
-          <div :if={@price != :none}>
-            {@price}
-          </div>
-          <div :if={@price == :none}>{gettext("No price")}</div>
-          <.form
-            id={"accept-#{@kind}"}
-            for={}
-            phx-submit="accept-price"
-          >
-            <.input
-              type="select"
-              name={"actors-input-#{@kind}"}
-              value=""
-              id={"actors-input-#{@kind}"}
-              options={@actors |> Enum.map(& &1.name)}
-              disabled={@price == :none}
-            />
-            <button type="submit" class="btn btn-primary" disabled={@price == :none}>
-              {gettext("Accept price")}
-            </button>
-          </.form>
-        </p>
       </div>
     </div>
     """

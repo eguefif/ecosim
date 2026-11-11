@@ -60,4 +60,10 @@ defmodule Ecosim.Sim.Market.Action do
   def is_offer(%__MODULE__{} = action) do
     action.action in [:buy_at, :sell_at]
   end
+
+  @doc """
+  Return the price for the action.
+  """
+  @spec price(t()) :: number()
+  def price(%__MODULE__{params: %{price: price}}), do: price
 end

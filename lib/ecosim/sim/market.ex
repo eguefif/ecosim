@@ -60,7 +60,6 @@ defmodule Ecosim.Sim.Market do
     {buyers, sellers} =
       actors
       |> spread_actors_between_sellers_and_buyers()
-      |> IO.inspect()
       |> build_wts(market_model)
 
     period = Period.new(buyers ++ sellers)
@@ -89,13 +88,13 @@ defmodule Ecosim.Sim.Market do
 
   @spec define_market_features(integer(), integer()) :: {integer(), number()}
   defp define_market_features(1, size) do
-    price = :rand.uniform(100 - div(size, 2))
-    step = 30 / size
+    price = :rand.uniform(100) + size
+    step = 30 / div(size, 2)
 
     {price, step}
   end
 
-  @spec create_buyers(integer(), integer(), number()) :: [Actor.t()]
+  @spec create_buyers([String.t()], integer(), number()) :: [Actor.t()]
   defp create_buyers(buyers, price, step) do
     start = price + length(buyers) * step
 
@@ -106,7 +105,7 @@ defmodule Ecosim.Sim.Market do
     |> elem(0)
   end
 
-  @spec create_sellers(integer(), integer(), number()) :: [Actor.t()]
+  @spec create_sellers([String.t()], integer(), number()) :: [Actor.t()]
   defp create_sellers(sellers, price, step) do
     start = price - length(sellers) * step
 
