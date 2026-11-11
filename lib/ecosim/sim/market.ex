@@ -76,22 +76,14 @@ defmodule Ecosim.Sim.Market do
     half = div(length(actors), 2)
 
     actors
-    |> Enum.shuffle()
     |> Enum.split(half)
   end
 
   @spec build_wts({[String.t()], [String.t()]}, integer()) :: {[Actor.t()], [Actor.t()]}
-  defp build_wts({buyers, sellers}, market_model) do
-    {price, step} = define_market_features(market_model, length(buyers) + length(sellers))
+  defp build_wts({buyers, sellers}, _market_model) do
+    price = 100
+    step = 2
     {create_buyers(buyers, price, step), create_sellers(sellers, price, step)}
-  end
-
-  @spec define_market_features(integer(), integer()) :: {integer(), number()}
-  defp define_market_features(1, size) do
-    price = :rand.uniform(100) + size
-    step = 30 / div(size, 2)
-
-    {price, step}
   end
 
   @spec create_buyers([String.t()], integer(), number()) :: [Actor.t()]

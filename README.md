@@ -6,8 +6,6 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
 ## TODO
 
-- [ ] Refactor update(:accept), it needs to take sellers and buyers and a price. Find the best way
-
 
 - [ ] Design simulation page in market_live: sim component
 - [ ] In Result, show the supply and demand theoritical plots.
@@ -17,7 +15,9 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
 ### Refactor Market
 
- - [ ] User chooses a demand and offer market model
+ - [ ] Create a file in the liveview ? or context
+ - [ ]  Delete the file when the simulation starts
+ - [ ] Generate file with wt and user's role.
  - [ ] We pass to Market.new the list of name and market model and it generates the actors itsef
     - [ ] Show theoritical result with price and quantity
     - [ ] Refine the way we calculate WT, it does not work

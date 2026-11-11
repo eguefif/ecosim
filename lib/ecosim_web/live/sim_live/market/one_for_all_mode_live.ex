@@ -1,10 +1,39 @@
 defmodule EcosimWeb.SimLive.OneForAllModeLive do
   use EcosimWeb, :live_view
 
+  alias EcosimWeb.Sim.Market
+
+  attr :uploads, :map, required: true
+  attr :market_model, :integer, default: -1
+  attr :market, Market, default: nil
+  attr :actors, :list, default: []
+
+  def preparation_one_for_all_mode(assigns) do
+    ~H"""
+    <div>
+      <.show_file_uploads_form_and_result
+        :if={@market == nil}
+        uploads={@uploads}
+        market_model={@market_model}
+      />
+      <div :if={@actors != []}>
+        <button
+          type="button"
+          name="click-generate-file"
+          phx-click="user-click-generate-file"
+          class="btn btn-secondary"
+        >
+          {gettext("Generate file")}
+        </button>
+      </div>
+    </div>
+    """
+  end
+
   attr :uploads, :map, required: true
   attr :market_model, :integer, default: -1
 
-  def preparation_one_for_all_mode(assigns) do
+  def show_file_uploads_form_and_result(assigns) do
     ~H"""
     <div class="flex flex-col gap-[16px]">
       <h2 class="text-lg font-bold">{gettext("1 - Preparation")}</h2>

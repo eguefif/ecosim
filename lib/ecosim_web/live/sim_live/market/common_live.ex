@@ -10,6 +10,8 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   attr :uploads, :map, required: true
   attr :actors, :list
   attr :market_model, :integer, default: -1
+  attr :actors_file, :string, default: nil
+  attr :market, Market
 
   def preparation(assigns) do
     ~H"""
@@ -18,6 +20,8 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
         :if={@mode == "one-for-all"}
         uploads={@uploads}
         market_model={@market_model}
+        market={@market}
+        actors={@actors}
       />
 
       <.show_actors :if={@actors != []} actors={@actors} />
@@ -37,6 +41,15 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
         >
           {gettext("Use example list")}
         </button>
+        <a
+          :if={@actors_file != nil}
+          id="download-actors"
+          href={"data:text/csv;base64," <> Base.encode64(@actors_file)}
+          download="actors.csv"
+          class="btn btn-secondary"
+        >
+          {gettext("Download File")}
+        </a>
       </div>
     </div>
     """

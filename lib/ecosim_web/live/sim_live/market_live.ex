@@ -29,8 +29,10 @@ defmodule EcosimWeb.Sim.MarketLive do
         :if={@step == :preparation}
         mode={@mode}
         uploads={@uploads}
-        actors={@actors}
         market_model={@market_model}
+        market={@market}
+        actors={@actors}
+        actors_file={@actors_file}
       />
 
       <CommonLive.sim
@@ -63,10 +65,12 @@ defmodule EcosimWeb.Sim.MarketLive do
      socket
      |> assign(:mode, mode)
      |> assign(:client_info, SimLog.client_info(socket))
-     |> assign(:step, :sim)
-     |> assign(:market, build_test_market())
+     |> assign(:step, :preparation)
+     # build_test_market())
+     |> assign(:market, nil)
      |> assign(:period_index, 0)
      |> assign(:actors, [])
+     |> assign(:actors_file, nil)
      |> assign(:market_model, 1)
      |> assign(:offer_focus_actor_name, nil)
      |> allow_upload(:actors,
@@ -74,6 +78,19 @@ defmodule EcosimWeb.Sim.MarketLive do
        max_entries: 1,
        max_file_size: 1_000_000
      )}
+  end
+
+  def handle_event("user-click-generate-file", _, socket) do
+    market = Market.new(socket.assigns.actors, socket.assigns.market_model)
+
+    file = create_file(market.buyers ++ market.sellers)
+    IO.puts("HEY")
+
+    {:noreply,
+     socket
+     |> assign(:actors_file, file)
+     |> assign(:market, market)
+     |> assign(:period_index, 0)}
   end
 
   def handle_event("user-click-offer", %{"offer" => offer}, socket) do
@@ -91,8 +108,12 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def handle_event("start", _, socket) do
-    market = Market.new(socket.assigns.actors, socket.assigns.market_model)
-    IO.inspect(market)
+    market =
+      if is_nil(socket.assigns.market) do
+        Market.new(socket.assigns.actors, socket.assigns.market_model)
+      else
+        socket.assigns.market
+      end
 
     log_sim_started(socket, market, :upload)
 
@@ -280,6 +301,8 @@ defmodule EcosimWeb.Sim.MarketLive do
   defp parse_content(content) do
     content
     |> String.split(",", trim: true)
+    |> Enum.map(&String.trim(&1))
+    |> Enum.reject(&(&1 == ""))
   end
 
   defp build_test_market do
@@ -348,4 +371,15 @@ defmodule EcosimWeb.Sim.MarketLive do
          )}
     end
   end
+
+  defp create_file(actors) do
+    actors
+    |> Enum.map(fn actor ->
+      Enum.join([actor_type_to_string(actor.type), actor.name, actor.wt], ",")
+    end)
+    |> Enum.join("\n")
+  end
+
+  defp actor_type_to_string(:buyer), do: gettext("Buyer")
+  defp actor_type_to_string(:seller), do: gettext("Seller")
 end
