@@ -36,7 +36,7 @@ defmodule Ecosim.Sim.Market do
   @type buyers() :: [Actor.t()]
   @type sellers() :: [Actor.t()]
   @type price() :: number()
-  @type accept_params() :: %{actor: Actor.t()}
+  @type accept_params() :: %{seller: Actor.t(), buyer: Actor.t(), price: number()}
   @type transaction() :: [%{index: integer(), price: number()}]
 
   @doc """
@@ -168,10 +168,24 @@ defmodule Ecosim.Sim.Market do
     update(market, action, params, -1)
   end
 
-  def update(%__MODULE__{} = market, :accept, %{actor: actor}, period_index) do
-    market
-    |> get_actor_list(actor)
-    |> add_transaction(market, actor, period_index)
+  def update(
+        %__MODULE__{} = market,
+        :accept,
+        %{buyer: buyer, seller: seller, price: price},
+        period_index
+      ) do
+    if check_wt(buyer, price) && check_wt(seller, price) do
+      {:ok,
+       %__MODULE__{
+         market
+         | periods:
+             List.update_at(market.periods, period_index, fn period ->
+               Period.add_action(period, :accept, %{actors: [seller, buyer], price: price})
+             end)
+       }}
+    else
+      {:error, :price_not_in_wt}
+    end
   end
 
   def update(%__MODULE__{} = market, :offer, %{actor: actor, price: price} = params, period_index) do
@@ -191,45 +205,13 @@ defmodule Ecosim.Sim.Market do
     end
   end
 
+  @spec check_wt(Actor.t(), number()) :: boolean()
+  defp check_wt(%Actor{type: :buyer, wt: wt}, price), do: price <= wt
+  defp check_wt(%Actor{type: :seller, wt: wt}, price), do: price >= wt
+
   @spec get_specific_action(t(), Actor.t()) :: :sell_at | :buy_at
   defp get_specific_action(%__MODULE__{} = market, actor) do
     if actor in market.buyers, do: :buy_at, else: :sell_at
-  end
-
-  @spec get_actor_list(t(), Actor.t()) :: [Actor.t()]
-  defp get_actor_list(market, actor) do
-    case actor.type do
-      :buyer -> market.sellers
-      :seller -> market.buyers
-    end
-  end
-
-  @spec add_transaction([Actor.t()], t(), Actor.t(), integer()) ::
-          {:ok, t()} | {:error, atom()}
-  defp add_transaction(actor_list, market, actor, period_index) do
-    period = Enum.at(market.periods, period_index)
-
-    case Period.get_last_offer_from(period, actor_list) do
-      :none ->
-        {:ok, market}
-
-      %Action{params: %{actor: actor2, price: price}} ->
-        if Actor.price_regarding_wt?(actor, price) do
-          {:ok,
-           %{
-             market
-             | periods:
-                 List.update_at(market.periods, period_index, fn period ->
-                   Period.add_action(period, :accept, %{
-                     actors: [actor, actor2],
-                     price: price
-                   })
-                 end)
-           }}
-        else
-          {:error, :price_not_in_wt}
-        end
-    end
   end
 
   @doc """

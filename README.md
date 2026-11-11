@@ -3,7 +3,11 @@
 Ecosim is a website that provides economic simulators for high school teachers and students. It's a work in progress.
 
 
-## Next TODO
+
+## TODO
+
+- [ ] Refactor update(:accept), it needs to take sellers and buyers and a price. Find the best way
+
 
 - [ ] Design simulation page in market_live: sim component
 - [ ] In Result, show the supply and demand theoritical plots.
@@ -15,12 +19,9 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
  - [ ] User chooses a demand and offer market model
  - [ ] We pass to Market.new the list of name and market model and it generates the actors itsef
-    - [ ] Refactor Market.new to take a list of names only and equaly distribute among seller and buyer and use prefedined WT
-    - [ ] Refactor UI: display all offers all the time: can click on offer and select
-    buyer or seller
-    - [ ] Reset all price when transaction done
-    - [ ] Keep list of actions and transaction
-    - [ ] Add the market model for model 1
+    - [ ] Show theoritical result with price and quantity
+    - [ ] Refine the way we calculate WT, it does not work
+
     - [ ] Add the market model for model 2
     - [ ] Add the market model for model 3
 

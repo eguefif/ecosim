@@ -55,23 +55,24 @@ defmodule Ecosim.Sim.Market.Period do
 
   @spec buyers_prices(t()) :: [Action.t()]
   defp buyers_prices(%__MODULE__{} = period) do
-    period.actions
+    period
     |> ordered_prices_since_transaction(&>/2)
     |> Enum.filter(&(&1.action == :buy_at))
   end
 
   @spec sellers_prices(t()) :: [Action.t()]
   defp sellers_prices(%__MODULE__{} = period) do
-    period.actions
+    period
     |> ordered_prices_since_transaction(&</2)
     |> Enum.filter(&(&1.action == :sell_at))
   end
 
-  defp ordered_prices_since_transaction(actions, comparison_function) do
-    actions
+  defp ordered_prices_since_transaction(%__MODULE__{} = period, comparison_function) do
+    period.actions
     |> Enum.reverse()
-    |> Enum.take_while(&(&1.action != :transaction))
+    |> Enum.take_while(&(not Action.is_transaction(&1)))
     |> Enum.uniq_by(&(Action.get_actor(&1) |> Map.get(:name)))
+    |> Enum.filter(&(Action.get_actor(&1) in period.actors))
     |> Enum.sort(fn action1, action2 ->
       comparison_function.(Action.price(action1), Action.price(action2))
     end)
@@ -117,7 +118,7 @@ defmodule Ecosim.Sim.Market.Period do
   def add_action(%__MODULE__{} = period, :accept, %{actors: [actor1, actor2]} = params) do
     if actor1 in period.actors && actor2 in period.actors do
       action = Action.new(:accept, params)
-      actors_to_remove = action.params |> Map.get(:actors) |> Enum.map(& &1.name)
+      actors_to_remove = [actor1.name, actor2.name]
 
       %__MODULE__{
         actors: Enum.reject(period.actors, fn actor -> actor.name in actors_to_remove end),
