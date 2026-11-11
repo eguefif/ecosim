@@ -5,7 +5,6 @@ defmodule Ecosim.Sim.Market.Period do
   There is a list of actors. Each time a transaction is made by two actors, they
   are removed from the period's actor list.
   """
-  alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Action
   alias Ecosim.Sim.Market.Actor
 
@@ -17,8 +16,8 @@ defmodule Ecosim.Sim.Market.Period do
         }
 
   @type period_info() :: %{
-          last_seller_price: Market.price() | :none,
-          last_buyer_price: Market.price() | :none,
+          sellers_prices: [Action.t()],
+          buyers_prices: [Action.t()],
           transactions: [Action.t()],
           events: [Action.t()]
         }
@@ -34,8 +33,8 @@ defmodule Ecosim.Sim.Market.Period do
   @spec info(t()) :: period_info()
   def info(%__MODULE__{} = period) do
     %{
-      last_seller_price: last_seller_price(period),
-      last_buyer_price: last_buyer_price(period),
+      sellers_prices: sellers_prices(period),
+      buyers_prices: buyers_prices(period),
       transactions: transactions(period),
       events: events(period)
     }
@@ -54,24 +53,28 @@ defmodule Ecosim.Sim.Market.Period do
     period.actions |> Enum.filter(&Action.is_transaction/1)
   end
 
-  @spec last_buyer_price(t()) :: Market.price() | :none
-  defp last_buyer_price(%__MODULE__{} = period) do
-    buyers = Enum.filter(period.actors, &(&1.type == :buyer))
-
-    case get_last_offer_from(period, buyers) do
-      :none -> :none
-      action -> Map.get(action.params, :price)
-    end
+  @spec buyers_prices(t()) :: [Action.t()]
+  defp buyers_prices(%__MODULE__{} = period) do
+    period.actions
+    |> ordered_prices_since_transaction(&>/2)
+    |> Enum.filter(&(&1.action == :buy_at))
   end
 
-  @spec last_seller_price(t()) :: Market.price() | :none
-  defp last_seller_price(%__MODULE__{} = period) do
-    sellers = Enum.filter(period.actors, &(&1.type == :seller))
+  @spec sellers_prices(t()) :: [Action.t()]
+  defp sellers_prices(%__MODULE__{} = period) do
+    period.actions
+    |> ordered_prices_since_transaction(&</2)
+    |> Enum.filter(&(&1.action == :sell_at))
+  end
 
-    case get_last_offer_from(period, sellers) do
-      :none -> :none
-      action -> Map.get(action.params, :price)
-    end
+  defp ordered_prices_since_transaction(actions, comparison_function) do
+    actions
+    |> Enum.reverse()
+    |> Enum.take_while(&(&1.action != :transaction))
+    |> Enum.uniq_by(&(Action.get_actor(&1) |> Map.get(:name)))
+    |> Enum.sort(fn action1, action2 ->
+      comparison_function.(Action.price(action1), Action.price(action2))
+    end)
   end
 
   @doc """

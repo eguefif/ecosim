@@ -1,7 +1,6 @@
 defmodule EcosimWeb.Sim.MarketLive do
   use EcosimWeb, :live_view
 
-  alias EcosimWeb.SimLive.OneForAllModeLive, as: OneMode
   alias EcosimWeb.SimLive.Market.CommonLive
   alias Ecosim.Sim.Market
   alias EcosimWeb.SimLog
@@ -33,13 +32,17 @@ defmodule EcosimWeb.Sim.MarketLive do
         market_model={@market_model}
       />
 
-      <OneMode.sim :if={@step == :sim} market={@market} period_index={@period_index} />
+      <CommonLive.sim :if={@step == :sim} market={@market} period_index={@period_index} />
 
       <CommonLive.result
         :if={@step == :result}
         result_graph={@result_graph}
         market_graph={@market_graph}
       />
+      <div class="divider p-24"></div>
+      <pre :if={@step in [:sim, :result]}>
+      {inspect(@market , pretty: true)}
+      </pre>
     </Layouts.app>
     """
   end
@@ -54,7 +57,9 @@ defmodule EcosimWeb.Sim.MarketLive do
      socket
      |> assign(:mode, mode)
      |> assign(:client_info, SimLog.client_info(socket))
-     |> assign(:step, :preparation)
+     |> assign(:step, :sim)
+     |> assign(:market, build_test_market())
+     |> assign(:period_index, 0)
      |> assign(:actors, [])
      |> assign(:market_model, 1)
      |> allow_upload(:actors,
@@ -277,17 +282,6 @@ defmodule EcosimWeb.Sim.MarketLive do
 
     Market.new(actors, 1)
   end
-
-  # defp apply_test_action({:offer, name, price}, market) do
-  #  {:ok, market} =
-  #    Market.update(market, :offer, %{actor: Market.actor(market, name), price: price})
-
-  #  market
-  # end
-
-  # defp apply_test_action({:accept, name}, market) do {:ok, market} = Market.update(market, :accept, %{actor: Market.actor(market, name)})
-  #  market
-  # end
 
   defp make_graph(data, _) when data == [], do: nil
 

@@ -2,6 +2,9 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   use EcosimWeb, :live_view
 
   alias EcosimWeb.SimLive.OneForAllModeLive, as: OneMode
+  alias Ecosim.Sim.Market
+  alias Ecosim.Sim.Market.Period
+  alias Ecosim.Sim.Market.Action
 
   attr :mode, :string
   attr :uploads, :map, required: true
@@ -76,7 +79,51 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
 
   slot :inner_block
 
-  def(show_sim_action_buttons(assigns)) do
+  attr :market, Market
+  attr :period_index, :integer, default: 0
+
+  def sim(assigns) do
+    ~H"""
+    <div class="flex flex-col gap-[32px]">
+      <.show_sim_action_buttons>
+        <.show_add_action_form actors={Market.active_actors(@market, @period_index)} />
+      </.show_sim_action_buttons>
+      <.show_periods periods={length(@market.periods)} current_period={@period_index} />
+      <.show_current_period
+        info={Enum.at(@market.periods, @period_index) |> Period.info()}
+        actors={Market.active_actors(@market, @period_index)}
+      />
+    </div>
+    """
+  end
+
+  attr :actors, :list
+
+  def show_add_action_form(assigns) do
+    ~H"""
+    <div class="p-[16px] flex justify-center">
+      <form id="one-for-all-add-action-form" phx-submit="add-action">
+        <div class="flex flex-row gap-[8px]">
+          <.live_component
+            module={EcosimWeb.SimLive.Market.InputAutocompleteComponent}
+            id="actor-input"
+            actors={@actors}
+          />
+          <input
+            id="price"
+            name="price"
+            type="text"
+            class="input w-[64px]"
+            placeholder={gettext("price")}
+          />
+          <button type="submit" class="btn btn-primary">{gettext("Add")}</button>
+        </div>
+      </form>
+    </div>
+    """
+  end
+
+  def show_sim_action_buttons(assigns) do
     ~H"""
     <div class="flex flex-col gap-[8px] shadow-md p-[32px]">
       <div class="flex flex-row justify-around">
@@ -120,85 +167,77 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
   end
 
   attr :info, :map
+  attr :actors, :list
 
-  def show_events(assigns) do
+  def show_current_period(assigns) do
     ~H"""
-    <div class="flex flex-row gap-[64px] justify-between w-[640]">
-      <.show_transactions info={@info} />
+    <div class="flex flex-row gap-[32px]">
+      <.show_buyers_prices offers={@info.buyers_prices} />
       <div class="divider divider-horizontal"></div>
-      <.show_all_actions info={@info} />
+      <.show_transactions transactions={@info.transactions} />
+      <div class="divider divider-horizontal"></div>
+      <.show_sellers_prices offers={@info.sellers_prices} />
     </div>
     """
   end
 
-  attr :info, :map
+  attr :offers, :list
 
-  def show_transactions(assigns) do
+  def show_buyers_prices(assigns) do
     ~H"""
-    <.show_actions
-      actions={@info.transactions |> Enum.reverse()}
-      label={gettext("Transactions")}
-      row_item={
-        fn action ->
-          actors = Map.get(action.params, :actors)
-          price = Map.get(action.params, :price)
-          [Enum.at(actors, 0), Enum.at(actors, 1), price]
-        end
-      }
-    >
-      <:action_row :let={[actor1, actor2, price]}>
-        <div class="shadow-md p-[16px] rounded-lg text-center bg-transaction" ,>
-          {transaction_text(actor1, actor2, price)}
+    <div class="flex flex-col w-full items-center">
+      <div class="text-lg font-bold">{gettext("Buyer's offers")}</div>
+      <div class="divider"></div>
+      <div class="flex flex-col gap-[8px]">
+        <div
+          :for={offer <- @offers}
+          class="bg-buyer shadow-md p-[16px] rounded-lg"
+        >
+          {action_text(:buy_at, offer.params.actor.name, offer.params.price)}
         </div>
-      </:action_row>
-    </.show_actions>
+      </div>
+    </div>
     """
   end
 
-  attr :info, :map
+  attr :offers, :list
 
-  def show_all_actions(assigns) do
+  def show_sellers_prices(assigns) do
     ~H"""
-    <.show_actions
-      actions={@info.events |> Enum.reverse()}
-      label={gettext("Events")}
-      row_item={
-        fn action ->
-          if action.action == :transact do
-            actor1 = Map.get(action.params, :actors) |> Enum.at(0)
-            actor2 = Map.get(action.params, :actors) |> Enum.at(1)
-            price = Map.get(action.params, :price)
-            [{actor1.name, actor2.name}, :transact, price]
-          else
-            actor = Map.get(action.params, :actor)
-            price = Map.get(action.params, :price)
-            [actor, action.action, price]
-          end
-        end
-      }
-    >
-      <:action_row :let={[actor, action_type, price]}>
+    <div class="flex flex-col w-full items-center">
+      <div class="text-lg font-bold">{gettext("Seller's offers")}</div>
+      <div class="divider"></div>
+      <div class="flex flex-col gap-[8px]">
         <div
-          :if={action_type == :transact}
-          class={[
-            "shadow-md p-[16px] rounded-lg text-center",
-            "bg-transaction"
-          ]}
+          :for={offer <- @offers}
+          class="bg-seller shadow-md p-[16px] rounded-lg"
         >
-          {transaction_between_text(actor, price)}
+          {action_text(:sell_at, offer.params.actor.name, offer.params.price)}
         </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :transactions, :map
+
+  def show_transactions(assigns) do
+    ~H"""
+    <div class="flex flex-col w-full items-center">
+      <div class="text-lg font-bold">{gettext("Transactions")}</div>
+      <div class="divider"></div>
+      <div class="flex flex-col gap-[8px]">
         <div
-          :if={action_type != :transact}
-          class={[
-            "shadow-md p-[16px] rounded-lg text-center",
-            action_type == :sell_at && "bg-seller",
-            action_type == :buy_at && "bg-buyer"
-          ]}
+          :for={
+            %Action{action: :accept, params: %{actors: [actor1, actor2], price: price}} <-
+              @transactions
+          }
+          class="bg-transaction shadow-md p-[16px] rounded-lg"
         >
-          {action_text(action_type, actor.name, price)}
+          {transaction_text(actor1, actor2, price)}
         </div>
-      </:action_row>
-    </.show_actions>
+      </div>
+    </div>
     """
   end
 
