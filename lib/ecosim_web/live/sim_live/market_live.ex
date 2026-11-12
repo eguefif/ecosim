@@ -1,31 +1,21 @@
 defmodule EcosimWeb.Sim.MarketLive do
   use EcosimWeb, :live_view
 
-  alias EcosimWeb.SimLive.Market.CommonLive
   alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Actor
+
   alias EcosimWeb.SimLog
+  alias EcosimWeb.SimLive.MarketLive.PreparationLive, as: Preparation
+  alias EcosimWeb.SimLive.MarketLive.ResultsLive, as: Results
+  alias EcosimWeb.SimLive.MarketLive.SimLive, as: Sim
 
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <.header>
-        {gettext("Market")} - ({get_mode(@mode)})
-        <:subtitle>
-          <.link navigate="https://www.researchgate.net/publication/24106520_An_Experimental_Study_of_Competitive_Market_Behavior">
-            {gettext("Based on Vernon Smith's 1962 paper")}
-          </.link>
-        </:subtitle>
-        <:actions>
-          <button phx-click="back" class="btn btn-primary">
-            <.icon name="hero-arrow-left" class="size-6" />
-            {gettext("Back")}
-          </button>
-        </:actions>
-      </.header>
+      <.market_header mode={@mode} />
 
-      <CommonLive.preparation
+      <Preparation.preparation
         :if={@step == :preparation}
         mode={@mode}
         uploads={@uploads}
@@ -35,23 +25,48 @@ defmodule EcosimWeb.Sim.MarketLive do
         actors_file={@actors_file}
       />
 
-      <CommonLive.sim
+      <Sim.sim
         :if={@step == :sim}
         market={@market}
         period_index={@period_index}
         offer_focus_actor_name={@offer_focus_actor_name}
       />
 
-      <CommonLive.result
+      <Results.result
         :if={@step == :result}
         result_graph={@result_graph}
         market_graph={@market_graph}
       />
-      <div class="divider p-24"></div>
-      <pre :if={@step in [:sim, :result]}>
+
+      <!-- Debug purposes -->
+      <div :if={@step in [:sim, :result]}>
+        <div class="divider p-24"></div>
+        <pre :if={@step in [:sim, :result]}>
       {inspect(@market , pretty: true)}
       </pre>
+      </div>
     </Layouts.app>
+    """
+  end
+
+  attr :mode, :atom
+
+  def market_header(assigns) do
+    ~H"""
+    <.header>
+      {gettext("Market")} - ({get_mode(@mode)})
+      <:subtitle>
+        <.link navigate="https://www.researchgate.net/publication/24106520_An_Experimental_Study_of_Competitive_Market_Behavior">
+          {gettext("Based on Vernon Smith's 1962 paper")}
+        </.link>
+      </:subtitle>
+      <:actions>
+        <button phx-click="back" class="btn btn-primary">
+          <.icon name="hero-arrow-left" class="size-6" />
+          {gettext("Back")}
+        </button>
+      </:actions>
+    </.header>
     """
   end
 

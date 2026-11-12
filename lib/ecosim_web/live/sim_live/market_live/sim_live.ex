@@ -1,96 +1,9 @@
-defmodule EcosimWeb.SimLive.Market.CommonLive do
+defmodule EcosimWeb.SimLive.MarketLive.SimLive do
   use EcosimWeb, :live_view
 
-  alias EcosimWeb.SimLive.OneForAllModeLive, as: OneMode
   alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Period
   alias Ecosim.Sim.Market.Action
-
-  attr :mode, :string
-  attr :uploads, :map, required: true
-  attr :actors, :list
-  attr :market_model, :integer, default: -1
-  attr :actors_file, :string, default: nil
-  attr :market, Market
-
-  def preparation(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-[8px]">
-      <OneMode.preparation_one_for_all_mode
-        :if={@mode == "one-for-all"}
-        uploads={@uploads}
-        market_model={@market_model}
-        market={@market}
-        actors={@actors}
-      />
-
-      <.show_actors :if={@actors != []} actors={@actors} />
-      <div class="flex flex-row gap-[8px] justify-around">
-        <div class="divider"></div>
-        <button
-          class={["btn btn-primary w-[96px] mx-auto", @actors == [] && "btn-disabled"]}
-          phx-click="start"
-        >
-          {gettext("Start")}
-        </button>
-        <button
-          type="submit"
-          id="default-list-button"
-          phx-click="user-click-default-button"
-          class="btn btn-secondary"
-        >
-          {gettext("Use example list")}
-        </button>
-        <a
-          :if={@actors_file != nil}
-          id="download-actors"
-          href={"data:text/csv;base64," <> Base.encode64(@actors_file)}
-          download="actors.csv"
-          class="btn btn-secondary"
-        >
-          {gettext("Download File")}
-        </a>
-      </div>
-    </div>
-    """
-  end
-
-  attr :actors, :list, required: true
-
-  def show_actors(assigns) do
-    ~H"""
-    <div class="divider text-xl">{gettext("Actors")}</div>
-    <ul id="actors" class="list gap-[4px]">
-      <li
-        :for={name <- @actors}
-        class="list-row items-baseline flex flex-row justify-between bg-info"
-      >
-        <div class="flex flex-row gap-[16px] items-baseline">
-          <span class="text-lg font-bold">{name}</span>
-        </div>
-        <button class="btn btn-square btn-ghost">
-          <.icon name="hero-x-mark" />
-        </button>
-      </li>
-    </ul>
-    """
-  end
-
-  attr :result_graph, :any
-  attr :market_graph, :any
-
-  def result(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-[32px]">
-      <div class="text-lg font-bold">{gettext("3 - Results")}</div>
-      <div class="flex flex-row gap[-32px] justify-around">
-        {@result_graph}
-      </div>
-    </div>
-    """
-  end
-
-  slot :inner_block
 
   attr :market, Market
   attr :period_index, :integer, default: 0
@@ -137,6 +50,8 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
     </div>
     """
   end
+
+  slot :inner_block
 
   def show_sim_action_buttons(assigns) do
     ~H"""
@@ -326,9 +241,6 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
     """
   end
 
-  # Sentences are translated as a whole (word order differs between languages).
-  # Interpolated values are HTML-escaped and rendered in bold; the translated
-  # templates themselves come from our own .po files.
   defp transaction_text(actor1, actor2, price) do
     {seller, buyer} =
       if actor1.type == :seller do
@@ -340,15 +252,6 @@ defmodule EcosimWeb.SimLive.Market.CommonLive do
     gettext("%{seller} sells to %{buyer} at the price of %{price}",
       seller: bold(seller),
       buyer: bold(buyer),
-      price: bold(price)
-    )
-    |> raw()
-  end
-
-  defp transaction_between_text({actor1, actor2}, price) do
-    gettext("Transaction between %{actor1} and %{actor2} at %{price}",
-      actor1: bold(actor1),
-      actor2: bold(actor2),
       price: bold(price)
     )
     |> raw()

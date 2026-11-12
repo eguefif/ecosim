@@ -6,25 +6,13 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
 ## TODO
 
+- [ ] Rearrange the way all the buttons and prep is laid out. It's messy.
+- [ ] Refactor code to make it better
 
 - [ ] Design simulation page in market_live: sim component
 - [ ] In Result, show the supply and demand theoritical plots.
 - [ ] Show all price and change the UI for accepting price. Just click on the price and it shows an actor selector that will accept the price.
 - [ ] End to end test
-
-
-### Refactor Market
-
- - [ ] Create a file in the liveview ? or context
- - [ ]  Delete the file when the simulation starts
- - [ ] Generate file with wt and user's role.
- - [ ] We pass to Market.new the list of name and market model and it generates the actors itsef
-    - [ ] Show theoritical result with price and quantity
-    - [ ] Refine the way we calculate WT, it does not work
-
-    - [ ] Add the market model for model 2
-    - [ ] Add the market model for model 3
-
 
 ## Roadmap
 
