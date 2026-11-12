@@ -2,17 +2,15 @@
 
 Ecosim is a website that provides economic simulators for high school teachers and students. It's a work in progress.
 
-
-
 ## TODO
 
-- [ ] Rearrange the way all the buttons and prep is laid out. It's messy.
-- [ ] Refactor code to make it better
+### Market sim results
+ - [ ] Create data for theory chart
+ - [ ] Plot result
+    - [ ] First graph: all the transaction to see convergence
+    - [ ] Tabs: per period quantity and average price
 
 - [ ] Design simulation page in market_live: sim component
-- [ ] In Result, show the supply and demand theoritical plots.
-- [ ] Show all price and change the UI for accepting price. Just click on the price and it shows an actor selector that will accept the price.
-- [ ] End to end test
 
 ## Roadmap
 

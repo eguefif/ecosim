@@ -88,7 +88,7 @@ defmodule Ecosim.Sim.Market do
 
   @spec create_buyers([String.t()], integer(), number()) :: [Actor.t()]
   defp create_buyers(buyers, price, step) do
-    start = price + length(buyers) * step
+    start = price + div(length(buyers), 2) * step
 
     buyers
     |> Enum.map_reduce(start, fn name, wt ->
@@ -99,7 +99,7 @@ defmodule Ecosim.Sim.Market do
 
   @spec create_sellers([String.t()], integer(), number()) :: [Actor.t()]
   defp create_sellers(sellers, price, step) do
-    start = price - length(sellers) * step
+    start = price - div(length(sellers), 2) * step
 
     sellers
     |> Enum.map_reduce(start, fn name, wt ->
@@ -256,5 +256,51 @@ defmodule Ecosim.Sim.Market do
     |> Enum.flat_map(&Period.transactions/1)
     |> Enum.with_index()
     |> Enum.map(fn {%Action{params: %{price: price}}, index} -> %{x: index, y: price} end)
+  end
+
+  @doc """
+  Return data for the market plot.
+  """
+  @spec market_plot_data(t()) :: [list()]
+  def market_plot_data(%__MODULE__{} = market) do
+    sellers =
+      Enum.map(market.sellers, & &1.wt)
+      |> Enum.sort()
+      |> Enum.with_index(fn wt, idx ->
+        %{x: idx + 1, y: wt}
+      end)
+
+    {buyers, _} =
+      Enum.map(market.buyers, & &1.wt)
+      |> Enum.sort()
+      |> Enum.map_reduce(length(market.buyers), fn wt, acc ->
+        {%{x: acc, y: wt}, acc - 1}
+      end)
+
+    [buyers, sellers]
+  end
+
+  @spec result_plot_data(t()) :: list()
+  def result_plot_data(%__MODULE__{} = market) do
+    Enum.flat_map(market.periods, & &1.actions)
+    |> Enum.filter(&(&1.action == :transact))
+    |> Enum.with_index(fn %{params: %{price: price}} = _, idx ->
+      %{x: idx, y: price}
+    end)
+  end
+
+  @doc """
+  Return the number of transaction for each period.
+  """
+  @spec transaction_per_period_plot_data(t()) :: list()
+  def transaction_per_period_plot_data(%__MODULE__{} = market) do
+    market.periods
+    |> Enum.with_index(fn period, idx ->
+      quantity =
+        Enum.filter(period.actions, &(&1.action == :transact))
+        |> length()
+
+      %{x: idx + 1, y: quantity}
+    end)
   end
 end
