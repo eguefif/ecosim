@@ -6,12 +6,12 @@ defmodule Ecosim.MarketTest do
 
   setup do
     buyer = Actor.new(:buyer, "b1", 8)
-    buyer2 = Actor.new(:buyer, "b2", 8)
+    buyer2 = Actor.new(:buyer, "b2", 10)
 
     buyers = [buyer, buyer2]
 
     seller = Actor.new(:seller, "s1", 3)
-    seller2 = Actor.new(:seller, "s2", 3)
+    seller2 = Actor.new(:seller, "s2", 5)
 
     sellers = [seller, seller2]
 
@@ -240,6 +240,17 @@ defmodule Ecosim.MarketTest do
 
       assert length(period.actions) == 2
       assert length(period.actors) == 4
+    end
+  end
+
+  describe "market_plot_data/1" do
+    test "returns correct data", %{market: market} do
+      [buyers, sellers] = Market.market_plot_data(market)
+
+      assert Enum.at(buyers, 0) in [%{x: 2, y: 8}, %{x: 1, y: 10}]
+      assert Enum.at(buyers, 1) in [%{x: 2, y: 8}, %{x: 1, y: 10}]
+      assert Enum.at(sellers, 0) in [%{x: 1, y: 3}, %{x: 2, y: 5}]
+      assert Enum.at(sellers, 1) in [%{x: 1, y: 3}, %{x: 2, y: 5}]
     end
   end
 end

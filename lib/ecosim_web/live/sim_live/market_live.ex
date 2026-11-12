@@ -34,12 +34,11 @@ defmodule EcosimWeb.Sim.MarketLive do
 
       <Results.result
         :if={@step == :result}
-        result_graph={@result_graph}
-        market_graph={@market_graph}
+        market={@market}
       />
 
       <!-- Debug purposes -->
-      <div :if={@step in [:sim, :result]}>
+      <div :if={@step in [:sim, :result] && !is_nil(@market) && false}>
         <div class="divider p-24"></div>
         <pre :if={@step in [:sim, :result]}>
       {inspect(@market , pretty: true)}
@@ -76,13 +75,16 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def mount(%{"mode" => mode}, _session, socket) do
+    market = build_test_market(with_history: true)
+    market = nil
+    step = :preparation
+
     {:ok,
      socket
      |> assign(:mode, mode)
      |> assign(:client_info, SimLog.client_info(socket))
-     |> assign(:step, :preparation)
-     # build_test_market())
-     |> assign(:market, nil)
+     |> assign(:step, step)
+     |> assign(:market, market)
      |> assign(:period_index, 0)
      |> assign(:actors, [])
      |> assign(:actors_file, nil)
@@ -151,6 +153,7 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   def handle_event("finish-sim", _, socket) do
     results = Market.results(socket.assigns.market)
+    market_graph = Market.market_plot_data(socket.assigns.market)
 
     SimLog.log(:result_viewed, socket.assigns.client_info,
       sim: "market",
@@ -163,9 +166,6 @@ defmodule EcosimWeb.Sim.MarketLive do
       results
       |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
       |> make_graph(gettext("Price evolution per transaction"))
-
-    market_graph =
-      make_market_graph(socket.assigns.market.buyers ++ socket.assigns.market.sellers)
 
     {:noreply,
      assign(socket, :step, :result)
@@ -320,10 +320,90 @@ defmodule EcosimWeb.Sim.MarketLive do
     |> Enum.reject(&(&1 == ""))
   end
 
-  defp build_test_market do
+  # Builds the example market.
+  #
+  # Options:
+  #   * `:with_history` - when `true`, the market is filled with several periods
+  #     containing offers and transactions. Useful to test the results page.
+  defp build_test_market(opts \\ []) do
     actors = ["Alice", "Bruno", "Chloé", "David", "Émilie", "François"]
+    market = Market.new(actors, 1)
 
-    Market.new(actors, 1)
+    if Keyword.get(opts, :with_history, false) do
+      add_test_history(market)
+    else
+      market
+    end
+  end
+
+  # Buyers: Alice (102), Bruno (100), Chloé (98)
+  # Sellers: David (98), Émilie (100), François (102)
+  defp add_test_history(market) do
+    periods = [
+      [
+        {:offer, "Alice", 96},
+        {:offer, "David", 104},
+        {:offer, "Alice", 99},
+        {:offer, "David", 101},
+        {:accept, "David", "Alice", 101},
+        {:offer, "Bruno", 97},
+        {:offer, "Émilie", 103},
+        {:accept, "Émilie", "Bruno", 100},
+        {:offer, "Chloé", 95},
+        {:offer, "François", 105}
+      ],
+      [
+        {:offer, "Bruno", 98},
+        {:offer, "David", 101},
+        {:accept, "David", "Bruno", 99},
+        {:offer, "Alice", 99},
+        {:offer, "Émilie", 101},
+        {:accept, "Émilie", "Alice", 100},
+        {:offer, "Chloé", 97},
+        {:offer, "François", 103}
+      ],
+      [
+        {:offer, "Chloé", 97},
+        {:offer, "David", 99},
+        {:accept, "David", "Chloé", 98},
+        {:offer, "Alice", 100},
+        {:offer, "Émilie", 100},
+        {:accept, "Émilie", "Alice", 100},
+        {:offer, "Bruno", 99},
+        {:offer, "François", 102}
+      ]
+    ]
+
+    periods
+    |> Enum.with_index()
+    |> Enum.reduce(market, fn {actions, period_index}, market ->
+      market =
+        if period_index == 0 do
+          market
+        else
+          {:ok, market} = Market.update(market, :add_period)
+          market
+        end
+
+      Enum.reduce(actions, market, &apply_test_action(&2, &1, period_index))
+    end)
+  end
+
+  defp apply_test_action(market, {:offer, name, price}, period_index) do
+    actor = Market.actor(market, name)
+    {:ok, market} = Market.update(market, :offer, %{actor: actor, price: price}, period_index)
+    market
+  end
+
+  defp apply_test_action(market, {:accept, seller, buyer, price}, period_index) do
+    params = %{
+      seller: Market.actor(market, seller),
+      buyer: Market.actor(market, buyer),
+      price: price
+    }
+
+    {:ok, market} = Market.update(market, :accept, params, period_index)
+    market
   end
 
   defp make_graph(data, _) when data == [], do: nil
@@ -351,10 +431,6 @@ defmodule EcosimWeb.Sim.MarketLive do
       {number, _} -> if number == trunc(number), do: trunc(number), else: number
       :error -> 0
     end
-  end
-
-  defp make_market_graph(_actors) do
-    nil
   end
 
   # @spec handle_accept(Market.t(), Actor.t(), Actor.t(), number(), integer()) :: {:noreply, }
