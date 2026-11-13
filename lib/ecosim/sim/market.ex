@@ -18,6 +18,17 @@ defmodule Ecosim.Sim.Market do
   A period ends when action `add_period` is used or when there is no more buyers and sellers.
   Any time a new period is created, buyers and sellers get back to the simulation with the same
   WTA and WTB.
+
+  new
+  update
+  actions
+  actor (from_name)
+  undo
+  active_actors
+  results
+  market_plot_data
+  result_plot_data
+  transaction_per_priod_plot_data
   """
   defstruct buyers: [], sellers: [], periods: []
 
@@ -38,6 +49,9 @@ defmodule Ecosim.Sim.Market do
   @type price() :: number()
   @type accept_params() :: %{seller: Actor.t(), buyer: Actor.t(), price: number()}
   @type transaction() :: [%{index: integer(), price: number()}]
+
+  def subscribe() do
+  end
 
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
