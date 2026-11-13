@@ -5,12 +5,7 @@ Ecosim is a website that provides economic simulators for high school teachers a
 ## TODO
 
 ### Market sim results
- - [ ] Create data for theory chart
- - [ ] Plot result
-    - [ ] First graph: all the transaction to see convergence
-    - [ ] Tabs: per period quantity and average price
-
-- [ ] Design simulation page in market_live: sim component
+    - [ ] Mode multi
 
 ## Roadmap
 

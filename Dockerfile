@@ -28,7 +28,7 @@ FROM ${BUILDER_IMAGE} AS builder
 
 # install build dependencies
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends build-essential git \
+  && apt-get install -y --no-install-recommends build-essential git nodejs npm \
   && rm -rf /var/lib/apt/lists/*
 
 # prepare build dir
@@ -53,6 +53,10 @@ COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
 RUN mix assets.setup
+
+# install npm dependencies (e.g. chart.js) — node_modules is excluded by .dockerignore
+COPY assets/package.json assets/package-lock.json assets/
+RUN npm --prefix assets ci
 
 COPY priv priv
 

@@ -1,6 +1,7 @@
 defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
   use EcosimWeb, :live_view
   alias EcosimWeb.SimLive.MarketLive.OneForAllModeLive, as: OneMode
+  alias EcosimWeb.SimLive.MarketLive.MultiModeLive, as: MultiMode
 
   attr :mode, :string
   attr :uploads, :map, required: true
@@ -8,11 +9,17 @@ defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
   attr :market_model, :integer, default: -1
   attr :actors_file, :string, default: nil
   attr :market, Market
+  attr :join_code, :integer
 
   def preparation(assigns) do
     ~H"""
     <div class="flex flex-col gap-[32px]">
       <.show_preparation_action_buttons actors={@actors} actors_file={@actors_file} />
+
+      <MultiMode.preparation_multi
+        :if={@mode == "multi"}
+        join_code={@join_code}
+      />
 
       <.show_market_model_choices market_choice={@market_model} />
 
