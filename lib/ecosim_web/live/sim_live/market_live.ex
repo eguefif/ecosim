@@ -23,6 +23,7 @@ defmodule EcosimWeb.Sim.MarketLive do
         market={@market}
         actors={@actors}
         actors_file={@actors_file}
+        join_code={@join_code}
       />
 
       <Sim.sim
@@ -36,14 +37,6 @@ defmodule EcosimWeb.Sim.MarketLive do
         :if={@step == :result}
         market={@market}
       />
-
-      <!-- Debug purposes -->
-      <div :if={@step in [:sim, :result] && !is_nil(@market) && false}>
-        <div class="divider p-24"></div>
-        <pre :if={@step in [:sim, :result]}>
-      {inspect(@market , pretty: true)}
-      </pre>
-      </div>
     </Layouts.app>
     """
   end
@@ -75,9 +68,11 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def mount(%{"mode" => mode}, _session, socket) do
-    market = build_test_market(with_history: true)
+    _market = build_test_market(with_history: true)
     market = nil
     step = :preparation
+
+    join_code = if mode == "multi", do: :rand.uniform(10000), else: nil
 
     {:ok,
      socket
@@ -89,6 +84,7 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:actors, [])
      |> assign(:actors_file, nil)
      |> assign(:market_model, 1)
+     |> assign(:join_code, join_code)
      |> assign(:offer_focus_actor_name, nil)
      |> allow_upload(:actors,
        accept: ~w(.txt .csv),
