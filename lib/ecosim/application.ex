@@ -7,6 +7,8 @@ defmodule Ecosim.Application do
 
   @impl true
   def start(_type, _args) do
+    :ets.new(:sim_registry, [:named_table, :set, :public])
+
     children = [
       EcosimWeb.Telemetry,
       Ecosim.Repo,

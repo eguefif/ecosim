@@ -73,6 +73,7 @@ defmodule EcosimWeb.Sim.MarketLive do
     step = :preparation
 
     join_code = if mode == "multi", do: :rand.uniform(10000), else: nil
+    :ets.insert(:sim_registry, {join_code, "market"})
 
     {:ok,
      socket
@@ -93,11 +94,24 @@ defmodule EcosimWeb.Sim.MarketLive do
      )}
   end
 
+  @impl true
+  def handle_event("back", _, socket) do
+    socket =
+      case socket.assigns.step do
+        :preparation -> socket |> push_navigate(to: ~p"/create-sim")
+        :sim -> assign(socket, :step, :preparation)
+        :result -> assign(socket, :step, :sim)
+      end
+
+    {:noreply, socket}
+  end
+
+  # Preparation Events ****************************************************
+
   def handle_event("user-click-generate-file", _, socket) do
     market = Market.new(socket.assigns.actors, socket.assigns.market_model)
 
     file = create_file(market.buyers ++ market.sellers)
-    IO.puts("HEY")
 
     {:noreply,
      socket
@@ -106,20 +120,6 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:period_index, 0)}
   end
 
-  def handle_event("user-click-offer", %{"offer" => offer}, socket) do
-    {:noreply, socket |> assign(:offer_focus_actor_name, offer)}
-  end
-
-  def handle_event("user-click-away-from-offer", _, socket) do
-    {:noreply, socket |> assign(:offer_focus_actor_name, nil)}
-  end
-
-  def handle_event("select-model", %{"model" => market_model}, socket) do
-    market_model = String.to_integer(market_model)
-    {:noreply, socket |> assign(:market_model, market_model)}
-  end
-
-  @impl true
   def handle_event("start", _, socket) do
     market =
       if is_nil(socket.assigns.market) do
@@ -136,38 +136,45 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:period_index, 0)}
   end
 
-  def handle_event("back", _, socket) do
-    socket =
-      case socket.assigns.step do
-        :preparation -> socket |> push_navigate(to: ~p"/create-sim")
-        :sim -> assign(socket, :step, :preparation)
-        :result -> assign(socket, :step, :sim)
-      end
+  def handle_event("select-model", %{"model" => market_model}, socket) do
+    market_model = String.to_integer(market_model)
+    {:noreply, socket |> assign(:market_model, market_model)}
+  end
 
+  def handle_event("user-click-default-button", %{}, socket) do
+    market = build_test_market()
+
+    log_sim_started(socket, market, :example)
+
+    {:noreply,
+     socket
+     |> assign(:market, market)
+     |> assign(:step, :sim)
+     |> assign(:period_index, 0)}
+  end
+
+  def handle_event("validate_upload", _params, socket) do
     {:noreply, socket}
   end
 
-  def handle_event("finish-sim", _, socket) do
-    results = Market.results(socket.assigns.market)
-    market_graph = Market.market_plot_data(socket.assigns.market)
-
-    SimLog.log(:result_viewed, socket.assigns.client_info,
-      sim: "market",
-      mode: socket.assigns.mode,
-      periods: length(socket.assigns.market.periods),
-      transactions: length(results)
-    )
-
-    graph =
-      results
-      |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
-      |> make_graph(gettext("Price evolution per transaction"))
-
-    {:noreply,
-     assign(socket, :step, :result)
-     |> assign(:result_graph, graph)
-     |> assign(:market_graph, market_graph)}
+  def handle_event("cancel_upload", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :actors, ref)}
   end
+
+  def handle_event("save_upload", _params, socket) do
+    content =
+      socket
+      |> consume_uploaded_entries(:actors, fn %{path: path}, _entry ->
+        {:ok, File.read!(path)}
+      end)
+      |> List.first()
+
+    actors = parse_content(content)
+
+    {:noreply, assign(socket, :actors, actors)}
+  end
+
+  # Simulation Events ***************************************************
 
   def handle_event("restart-sim", _, socket) do
     market = Market.new(socket.assigns.market)
@@ -207,6 +214,14 @@ defmodule EcosimWeb.Sim.MarketLive do
     end
   end
 
+  def handle_event("user-click-offer", %{"offer" => offer}, socket) do
+    {:noreply, socket |> assign(:offer_focus_actor_name, offer)}
+  end
+
+  def handle_event("user-click-away-from-offer", _, socket) do
+    {:noreply, socket |> assign(:offer_focus_actor_name, nil)}
+  end
+
   def handle_event("accept-price", %{"actors-input-seller" => ""}, socket),
     do: {:noreply, socket}
 
@@ -239,18 +254,6 @@ defmodule EcosimWeb.Sim.MarketLive do
     handle_accept(market, seller, buyer, price, period_index, socket)
   end
 
-  def handle_event("user-click-default-button", %{}, socket) do
-    market = build_test_market()
-
-    log_sim_started(socket, market, :example)
-
-    {:noreply,
-     socket
-     |> assign(:market, market)
-     |> assign(:step, :sim)
-     |> assign(:period_index, 0)}
-  end
-
   def handle_event("undo-last-action", %{}, socket) do
     {:noreply,
      assign(
@@ -274,30 +277,29 @@ defmodule EcosimWeb.Sim.MarketLive do
     {:noreply, assign(socket, :period_index, period_index)}
   end
 
-  def handle_event("show-day", %{"period" => period}, socket) do
-    {:noreply, assign(socket, :period_index, period)}
+  def handle_event("finish-sim", _, socket) do
+    results = Market.results(socket.assigns.market)
+    market_graph = Market.market_plot_data(socket.assigns.market)
+
+    SimLog.log(:result_viewed, socket.assigns.client_info,
+      sim: "market",
+      mode: socket.assigns.mode,
+      periods: length(socket.assigns.market.periods),
+      transactions: length(results)
+    )
+
+    graph =
+      results
+      |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
+      |> make_graph(gettext("Price evolution per transaction"))
+
+    {:noreply,
+     assign(socket, :step, :result)
+     |> assign(:result_graph, graph)
+     |> assign(:market_graph, market_graph)}
   end
 
-  def handle_event("validate_upload", _params, socket) do
-    {:noreply, socket}
-  end
-
-  def handle_event("cancel_upload", %{"ref" => ref}, socket) do
-    {:noreply, cancel_upload(socket, :actors, ref)}
-  end
-
-  def handle_event("save_upload", _params, socket) do
-    content =
-      socket
-      |> consume_uploaded_entries(:actors, fn %{path: path}, _entry ->
-        {:ok, File.read!(path)}
-      end)
-      |> List.first()
-
-    actors = parse_content(content)
-
-    {:noreply, assign(socket, :actors, actors)}
-  end
+  # Supporting Functions ********************************************************
 
   defp log_sim_started(socket, market, source) do
     SimLog.log(:started, socket.assigns.client_info,
