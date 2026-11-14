@@ -30,7 +30,7 @@ defmodule Ecosim.Sim.Market do
   result_plot_data
   transaction_per_priod_plot_data
   """
-  defstruct buyers: [], sellers: [], periods: []
+  defstruct buyers: [], sellers: [], periods: [], step: :preparation
 
   alias Ecosim.Sim.Market.Period
   alias Ecosim.Sim.Market.Action
@@ -39,7 +39,8 @@ defmodule Ecosim.Sim.Market do
   @type t() :: %__MODULE__{
           buyers: [Actor.t()],
           sellers: [Actor.t()],
-          periods: [Period.t()]
+          periods: [Period.t()],
+          step: :preparation | :sim | :result
         }
 
   @type action() :: :add_period | :buy_at | :sell_at | :accept
@@ -49,9 +50,7 @@ defmodule Ecosim.Sim.Market do
   @type price() :: number()
   @type accept_params() :: %{seller: Actor.t(), buyer: Actor.t(), price: number()}
   @type transaction() :: [%{index: integer(), price: number()}]
-
-  def subscribe() do
-  end
+  @type step() :: :preparation | :sim | :result
 
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
@@ -59,18 +58,21 @@ defmodule Ecosim.Sim.Market do
   The market model with define what WTs distribution to use.
   """
   @spec new(buyers(), sellers()) :: t()
-  def new(buyers, sellers) when is_list(buyers) and is_list(sellers) do
+  def new(buyers, sellers)
+      when is_list(buyers) and is_list(sellers) do
     period = Period.new(buyers ++ sellers)
 
     %__MODULE__{
       buyers: buyers,
       sellers: sellers,
-      periods: [period]
+      periods: [period],
+      step: :preparation
     }
   end
 
   @spec new([String.t()], integer()) :: t()
-  def new(actors, market_model) when is_integer(market_model) and is_list(actors) do
+  def new(actors, market_model)
+      when is_integer(market_model) and is_list(actors) do
     {buyers, sellers} =
       actors
       |> spread_actors_between_sellers_and_buyers()
@@ -81,7 +83,8 @@ defmodule Ecosim.Sim.Market do
     %__MODULE__{
       buyers: buyers,
       sellers: sellers,
-      periods: [period]
+      periods: [period],
+      step: :preparation
     }
   end
 
