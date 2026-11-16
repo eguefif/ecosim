@@ -4,18 +4,16 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
 ## TODO
 
-- [ ] Refactor current `market.ex` and `market_live.ex`, it should only use `market.ex` for everything
-    - [ ] `new/0`: returns a market with initial `market_model` set to 1
-    - [ ] `update(market, command, params \\ %{})` should handle the following:
-        - [ ] `:add_actors`, takes a list of actors
-        - [ ] `:change_period`
-        - [ ] `:change_step`
-        - [ ] `:change_market_model`
-        - [ ] `:init_simulation` will use the current list of participants and create wt's and distribution
-    - [ ] `info(market)`: returns a map depending on the step
-        - [ ] `:preparation`: returns the current list of participants and market_model
-        - [ ] `:sim`: returns the list of transactions, the list of active actors with their last offer, actor's type and wt
-        - [ ] `:result`: returns the market_data, price_per_transaction, quantity per period datasets
+- [x] Refactor current `market.ex` and `market_live.ex`, it should only use `market.ex` for everything
+    - [x] `new/0`: returns a market with initial `market_model` set to 1
+    - [x] `update(market, command, params \\ %{})` should handle the following:
+        - [x] `:change_period`
+        - [x] `:change_step`
+        - [x] `:change_market_model`
+    - [x] `info(market)`: returns a map depending on the step
+        - [x] `:preparation`: returns the current list of participants and market_model
+        - [x] `:sim`: returns the list of transactions, the list of active actors with their last offer, actor's type and wt
+        - [x] `:result`: returns the market_data, price_per_transaction, quantity per period datasets
 - [ ] Create a `Simulator` module to handle logic and define state model
     - [ ] Keep track of list of actors
     - [ ] Keep track of simulation type via the Module name

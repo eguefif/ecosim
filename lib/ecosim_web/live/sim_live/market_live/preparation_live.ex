@@ -6,7 +6,6 @@ defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
   attr :mode, :string
   attr :uploads, :map, required: true
   attr :actors, :list
-  attr :market_model, :integer, default: -1
   attr :actors_file, :string, default: nil
   attr :market, Market
   attr :join_code, :integer
@@ -21,7 +20,7 @@ defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
         join_code={@join_code}
       />
 
-      <.show_market_model_choices market_choice={@market_model} />
+      <.show_market_model_choices market_choice={@market.market_model} />
 
       <OneMode.preparation_one_for_all_mode
         :if={@mode == "one-for-all"}

@@ -16,10 +16,10 @@ defmodule Ecosim.Sim.Market.Period do
         }
 
   @type period_info() :: %{
-          sellers_prices: [Action.t()],
-          buyers_prices: [Action.t()],
-          transactions: [Action.t()],
-          events: [Action.t()]
+          sellers: [%{name: String.t(), price: number()}],
+          buyers: [%{name: String.t(), price: number()}],
+          active_actors: [Actor.t()],
+          transactions: [Action.t()]
         }
 
   @spec new([Actor.t()]) :: t()
@@ -33,24 +33,21 @@ defmodule Ecosim.Sim.Market.Period do
   @spec info(t()) :: period_info()
   def info(%__MODULE__{} = period) do
     %{
-      sellers_prices: sellers_prices(period),
-      buyers_prices: buyers_prices(period),
-      transactions: transactions(period),
-      events: events(period)
+      sellers: sellers_prices(period),
+      buyers: buyers_prices(period),
+      active_actors: period.actors,
+      transactions: transactions(period)
     }
-  end
-
-  @spec events(t()) :: [Action.t()]
-  defp events(%__MODULE__{} = period) do
-    period.actions
   end
 
   @doc """
   Returns the list of transaction for the current periods.
   """
-  @spec transactions(t()) :: [Action.t()]
+  @spec transactions(t()) :: [%{actor: String.t(), price: number()}]
   def transactions(%__MODULE__{} = period) do
-    period.actions |> Enum.filter(&Action.is_transaction/1)
+    period.actions
+    |> Enum.filter(&Action.is_transaction/1)
+    |> Enum.map(&Action.transaction(&1))
   end
 
   @spec buyers_prices(t()) :: [Action.t()]
@@ -58,13 +55,19 @@ defmodule Ecosim.Sim.Market.Period do
     period
     |> ordered_prices_since_transaction(&>/2)
     |> Enum.filter(&(&1.action == :buy_at))
+    |> Enum.map(fn action ->
+      %{name: action.params.actor.name, price: action.params.price}
+    end)
   end
 
-  @spec sellers_prices(t()) :: [Action.t()]
+  @spec sellers_prices(t()) :: [%{actor: String.t(), price: number()}]
   defp sellers_prices(%__MODULE__{} = period) do
     period
     |> ordered_prices_since_transaction(&</2)
     |> Enum.filter(&(&1.action == :sell_at))
+    |> Enum.map(fn action ->
+      %{name: action.params.actor.name, price: action.params.price}
+    end)
   end
 
   defp ordered_prices_since_transaction(%__MODULE__{} = period, comparison_function) do

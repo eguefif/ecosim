@@ -16,27 +16,26 @@ defmodule EcosimWeb.Sim.MarketLive do
       <.market_header mode={@mode} />
 
       <Preparation.preparation
-        :if={@step == :preparation}
+        :if={@market.step == :preparation}
         mode={@mode}
         uploads={@uploads}
-        market_model={@market_model}
         market={@market}
         actors={@actors}
         actors_file={@actors_file}
-        join_code={@join_code}
+        join_code={3_123_124}
       />
 
       <Sim.sim
-        :if={@step == :sim}
+        :if={@market.step == :sim}
         market={@market}
-        period_index={@period_index}
         offer_focus_actor_name={@offer_focus_actor_name}
       />
 
       <Results.result
-        :if={@step == :result}
+        :if={@market.step == :result}
         market={@market}
       />
+      {inspect(@market.periods)}
     </Layouts.app>
     """
   end
@@ -68,24 +67,21 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def mount(%{"mode" => mode}, _session, socket) do
-    _market = build_test_market(with_history: true)
-    market = nil
-    step = :preparation
+    # market = Market.new([], [], 1)
+    market = build_test_market(with_history: true)
+    {:ok, market} = Market.update(market, :step_forward)
 
-    join_code = if mode == "multi", do: :rand.uniform(10000), else: nil
-    :ets.insert(:sim_registry, {join_code, "market"})
+    # join_code = if mode == "multi", do: :rand.uniform(10000), else: nil
+    # :ets.insert(:sim_registry, {join_code, "market"})
 
     {:ok,
      socket
      |> assign(:mode, mode)
      |> assign(:client_info, SimLog.client_info(socket))
-     |> assign(:step, step)
      |> assign(:market, market)
-     |> assign(:period_index, 0)
-     |> assign(:actors, [])
      |> assign(:actors_file, nil)
+     |> assign(:actors, [])
      |> assign(:market_model, 1)
-     |> assign(:join_code, join_code)
      |> assign(:offer_focus_actor_name, nil)
      |> allow_upload(:actors,
        accept: ~w(.txt .csv),
@@ -96,11 +92,12 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   @impl true
   def handle_event("back", _, socket) do
+    market = socket.assigns.market
+
     socket =
-      case socket.assigns.step do
-        :preparation -> socket |> push_navigate(to: ~p"/create-sim")
-        :sim -> assign(socket, :step, :preparation)
-        :result -> assign(socket, :step, :sim)
+      case Market.update(market, :step_back) do
+        {:back_to_start, _} -> socket |> push_navigate(to: ~p"/create-sim")
+        {:ok, market} -> assign(socket, :market, market)
       end
 
     {:noreply, socket}
@@ -121,14 +118,10 @@ defmodule EcosimWeb.Sim.MarketLive do
   end
 
   def handle_event("start", _, socket) do
-    market =
-      if is_nil(socket.assigns.market) do
-        Market.new(socket.assigns.actors, socket.assigns.market_model)
-      else
-        socket.assigns.market
-      end
-
-    log_sim_started(socket, market, :upload)
+    IO.puts("HEY")
+    IO.inspect(socket.assigns.market)
+    {:ok, market} = socket.assigns.market |> Market.update(:step_forward)
+    IO.inspect(market)
 
     {:noreply,
      assign(socket, :step, :sim)
@@ -138,19 +131,21 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   def handle_event("select-model", %{"model" => market_model}, socket) do
     market_model = String.to_integer(market_model)
-    {:noreply, socket |> assign(:market_model, market_model)}
+
+    {:ok, market} =
+      socket.assigns.market |> Market.update(:select_model, %{market_model: market_model})
+
+    {:noreply, socket |> assign(:market, market)}
   end
 
   def handle_event("user-click-default-button", %{}, socket) do
-    market = build_test_market()
+    {:ok, market} = build_test_market() |> Market.update(:step_forward)
 
     log_sim_started(socket, market, :example)
 
     {:noreply,
      socket
-     |> assign(:market, market)
-     |> assign(:step, :sim)
-     |> assign(:period_index, 0)}
+     |> assign(:market, market)}
   end
 
   def handle_event("validate_upload", _params, socket) do
@@ -183,8 +178,8 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   def handle_event(
         "add-action",
-        %{"actor" => actor, "price" => price},
-        %{assigns: %{market: market, period_index: period_index}} = socket
+        %{"actor" => action_actor_name, "price" => price},
+        %{assigns: %{market: market}} = socket
       ) do
     price =
       case Integer.parse(price) do
@@ -192,12 +187,12 @@ defmodule EcosimWeb.Sim.MarketLive do
         {number, _} -> number
       end
 
-    case Market.actor(market, actor) do
+    case actor(market, action_actor_name) do
       nil ->
         {:noreply, put_flash(socket, :error, gettext("The given actor does not exist."))}
 
       actor ->
-        case Market.update(market, :offer, %{actor: actor, price: price}, period_index) do
+        case Market.update(market, :offer, %{actor: actor, price: price}) do
           {:ok, market} ->
             {:noreply, socket |> assign(:market, market)}
 
@@ -234,11 +229,10 @@ defmodule EcosimWeb.Sim.MarketLive do
         socket
       ) do
     market = socket.assigns.market
-    period_index = socket.assigns.period_index
-    seller = Market.actor(market, actor)
-    buyer = Market.actor(market, socket.assigns.offer_focus_actor_name)
+    seller = actor(market, actor)
+    buyer = actor(market, socket.assigns.offer_focus_actor_name)
 
-    handle_accept(market, seller, buyer, price, period_index, socket)
+    handle_accept(market, seller, buyer, price, socket)
   end
 
   def handle_event(
@@ -247,56 +241,63 @@ defmodule EcosimWeb.Sim.MarketLive do
         socket
       ) do
     market = socket.assigns.market
-    period_index = socket.assigns.period_index
-    buyer = Market.actor(market, actor)
-    seller = Market.actor(market, socket.assigns.offer_focus_actor_name)
+    buyer = actor(market, actor)
+    seller = actor(market, socket.assigns.offer_focus_actor_name)
 
-    handle_accept(market, seller, buyer, price, period_index, socket)
+    handle_accept(market, seller, buyer, price, socket)
   end
 
   def handle_event("undo-last-action", %{}, socket) do
+    {:ok, market} =
+      Market.update(
+        socket.assigns.market,
+        :undo
+      )
+
     {:noreply,
      assign(
        socket,
        :market,
-       Market.undo(
-         socket.assigns.market,
-         socket.assigns.period_index
-       )
+       market
      )}
   end
 
   def handle_event("add-period", %{}, socket) do
     {:ok, market} = Market.update(socket.assigns.market, :add_period)
-    current_period_index = length(market.periods) - 1
-    {:noreply, assign(socket, :market, market) |> assign(:period_index, current_period_index)}
+    {:noreply, assign(socket, :market, market)}
   end
 
   def handle_event("show-period", %{"period" => period_index}, socket) do
     period_index = String.to_integer(period_index)
-    {:noreply, assign(socket, :period_index, period_index)}
+
+    {:ok, market} =
+      socket.assigns.market |> Market.update(:change_active_period, %{period: period_index})
+
+    {:noreply,
+     assign(
+       socket,
+       :market,
+       market
+     )}
   end
 
   def handle_event("finish-sim", _, socket) do
-    results = Market.results(socket.assigns.market)
-    market_graph = Market.market_plot_data(socket.assigns.market)
+    {results_info, market} =
+      with {:ok, market} <- Market.update(socket.assigns.market, :step_forward),
+           results_info <- Market.info(market) do
+        {results_info, market}
+      end
 
     SimLog.log(:result_viewed, socket.assigns.client_info,
       sim: "market",
       mode: socket.assigns.mode,
       periods: length(socket.assigns.market.periods),
-      transactions: length(results)
+      transactions: length(results_info.price_per_transaction_plot)
     )
-
-    graph =
-      results
-      |> Enum.map(fn %{x: x, y: y} -> [x, y] end)
-      |> make_graph(gettext("Price evolution per transaction"))
 
     {:noreply,
      assign(socket, :step, :result)
-     |> assign(:result_graph, graph)
-     |> assign(:market_graph, market_graph)}
+     |> assign(:market, market)}
   end
 
   # Supporting Functions ********************************************************
@@ -328,6 +329,7 @@ defmodule EcosimWeb.Sim.MarketLive do
     market = Market.new(actors, 1)
 
     if Keyword.get(opts, :with_history, false) do
+      {:ok, market} = Market.update(market, :step_forward)
       add_test_history(market)
     else
       market
@@ -373,53 +375,28 @@ defmodule EcosimWeb.Sim.MarketLive do
     ]
 
     periods
-    |> Enum.with_index()
-    |> Enum.reduce(market, fn {actions, period_index}, market ->
-      market =
-        if period_index == 0 do
-          market
-        else
-          {:ok, market} = Market.update(market, :add_period)
-          market
-        end
-
-      Enum.reduce(actions, market, &apply_test_action(&2, &1, period_index))
+    |> Enum.reduce(market, fn actions, market ->
+      market = Enum.reduce(actions, market, &apply_test_action(&2, &1))
+      {:ok, market} = Market.update(market, :add_period)
+      market
     end)
   end
 
-  defp apply_test_action(market, {:offer, name, price}, period_index) do
-    actor = Market.actor(market, name)
-    {:ok, market} = Market.update(market, :offer, %{actor: actor, price: price}, period_index)
+  defp apply_test_action(market, {:offer, name, price}) do
+    actor = actor(market, name)
+    {:ok, market} = Market.update(market, :offer, %{actor: actor, price: price})
     market
   end
 
-  defp apply_test_action(market, {:accept, seller, buyer, price}, period_index) do
+  defp apply_test_action(market, {:accept, seller, buyer, price}) do
     params = %{
-      seller: Market.actor(market, seller),
-      buyer: Market.actor(market, buyer),
+      seller: actor(market, seller),
+      buyer: actor(market, buyer),
       price: price
     }
 
-    {:ok, market} = Market.update(market, :accept, params, period_index)
+    {:ok, market} = Market.update(market, :accept, params)
     market
-  end
-
-  defp make_graph(data, _) when data == [], do: nil
-
-  defp make_graph(data, title) when length(data) != 0 do
-    dataset = Contex.Dataset.new(data, ["x", "y"])
-    max_price = data |> Enum.map(fn [_x, y] -> y end) |> Enum.max()
-    min_price = data |> Enum.map(fn [_x, y] -> y end) |> Enum.min()
-
-    y_scale =
-      Contex.ContinuousLinearScale.new()
-      |> Contex.ContinuousLinearScale.domain(max(min_price - 5, 0), max(max_price, 1))
-
-    chart = Contex.LinePlot.new(dataset, custom_y_scale: y_scale)
-
-    Contex.Plot.new(600, 400, chart)
-    |> Contex.Plot.titles(title, "")
-    |> Contex.Plot.to_svg()
   end
 
   defp parse_price(price) when is_number(price), do: price
@@ -437,7 +414,6 @@ defmodule EcosimWeb.Sim.MarketLive do
          %Actor{} = seller,
          %Actor{} = buyer,
          price,
-         period_index,
          socket
        ) do
     price = parse_price(price)
@@ -445,8 +421,7 @@ defmodule EcosimWeb.Sim.MarketLive do
     case Market.update(
            market,
            :accept,
-           %{seller: seller, buyer: buyer, price: price},
-           period_index
+           %{seller: seller, buyer: buyer, price: price}
          ) do
       {:ok, market} ->
         {:noreply, socket |> assign(:market, market)}
@@ -471,4 +446,9 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   defp actor_type_to_string(:buyer), do: gettext("Buyer")
   defp actor_type_to_string(:seller), do: gettext("Seller")
+
+  defp actor(%Market{} = market, look_for_name) do
+    %{active_actors: active_actors} = Market.info(market)
+    Enum.find(active_actors, &(&1.name == look_for_name))
+  end
 end

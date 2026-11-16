@@ -46,6 +46,20 @@ defmodule Ecosim.Sim.Market.Action do
   end
 
   @doc """
+  Returns a map with the buyer and seller's name and the price
+  """
+  @spec transaction(t()) :: map()
+  def transaction(%__MODULE__{params: %{actors: [actor1, actor2], price: price}})
+      when actor1.type == :buyer do
+    %{buyer: actor1.name, seller: actor2.name, price: price}
+  end
+
+  def transaction(%__MODULE__{params: %{actors: [actor1, actor2], price: price}})
+      when actor2.type == :buyer do
+    %{buyer: actor2.name, seller: actor1.name, price: price}
+  end
+
+  @doc """
   Return true if action is transaction between two actors.
   """
   @spec is_transaction(t()) :: boolean
