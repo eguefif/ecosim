@@ -2,23 +2,20 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
   use EcosimWeb, :live_view
 
   alias Ecosim.Sim.Market
-  alias Ecosim.Sim.Market.Period
-  alias Ecosim.Sim.Market.Action
 
   attr :market, Market
-  attr :period_index, :integer, default: 0
   attr :offer_focus_actor_name, :string
 
   def sim(assigns) do
     ~H"""
     <div class="flex flex-col gap-[32px]">
       <.show_sim_action_buttons>
-        <.show_add_action_form actors={Market.active_actors(@market, @period_index)} />
+        <.show_add_action_form actors={Market.info(@market) |> Map.get(:active_actors)} />
       </.show_sim_action_buttons>
-      <.show_periods periods={length(@market.periods)} current_period={@period_index} />
+      <.show_periods periods={length(@market.periods)} current_period={@market.active_period_index} />
       <.show_current_period
-        info={Enum.at(@market.periods, @period_index) |> Period.info()}
-        actors={Market.active_actors(@market, @period_index)}
+        info={Market.info(@market)}
+        actors={Market.info(@market) |> Map.get(:active_actors)}
         offer_focus_actor_name={@offer_focus_actor_name}
       />
     </div>
@@ -104,7 +101,7 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
     ~H"""
     <div class="flex flex-row gap-[32px]">
       <.show_buyers_prices
-        offers={@info.buyers_prices}
+        offers={@info.buyers}
         offer_focus_actor_name={@offer_focus_actor_name}
         actors={Enum.filter(@actors, &(&1.type == :seller)) |> Enum.map(& &1.name)}
       />
@@ -112,7 +109,7 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
       <.show_transactions transactions={@info.transactions} />
       <div class="divider divider-horizontal"></div>
       <.show_sellers_prices
-        offers={@info.sellers_prices}
+        offers={@info.sellers}
         offer_focus_actor_name={@offer_focus_actor_name}
         actors={Enum.filter(@actors, &(&1.type == :buyer)) |> Enum.map(& &1.name)}
       />
@@ -131,15 +128,15 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
       <div class="divider"></div>
       <div class="flex flex-col gap-[8px]">
         <div
-          :for={offer <- @offers}
+          :for={%{name: name, price: price} <- @offers}
           class="bg-buyer shadow-md p-[16px] rounded-lg hover:scale-104 duration-200 transform-transition ease-in-out pointer"
           phx-click="user-click-offer"
           phx-click-away="user-click-away-from-offer"
-          phx-value-offer={offer.params.actor.name}
+          phx-value-offer={name}
         >
-          {action_text(:buy_at, offer.params.actor.name, offer.params.price)}
-          <div :if={@offer_focus_actor_name == offer.params.actor.name}>
-            <.show_select_transaction_form actors={@actors} type="seller" price={offer.params.price} />
+          {action_text(:buy_at, name, price)}
+          <div :if={@offer_focus_actor_name == name}>
+            <.show_select_transaction_form actors={@actors} type="seller" price={price} />
           </div>
         </div>
       </div>
@@ -158,18 +155,18 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
       <div class="divider"></div>
       <div class="flex flex-col gap-[8px]">
         <div
-          :for={offer <- @offers}
+          :for={%{name: name, price: price} <- @offers}
           class="bg-seller shadow-md p-[16px] rounded-lg  hover:scale-104 duration-200 transform-transition ease-in-out pointer"
           phx-click="user-click-offer"
           phx-click-away="user-click-away-from-offer"
-          phx-value-offer={offer.params.actor.name}
+          phx-value-offer={name}
         >
-          {action_text(:sell_at, offer.params.actor.name, offer.params.price)}
-          <div :if={@offer_focus_actor_name == offer.params.actor.name}>
+          {action_text(:sell_at, name, price)}
+          <div :if={@offer_focus_actor_name == name}>
             <.show_select_transaction_form
               actors={@actors}
               type="buyer"
-              price={offer.params.price}
+              price={price}
             />
           </div>
         </div>
@@ -207,12 +204,12 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
       <div class="flex flex-col gap-[8px]">
         <div
           :for={
-            %Action{action: :transact, params: %{actors: [actor1, actor2], price: price}} <-
+            %{seller: seller, buyer: buyer, price: price} <-
               @transactions
           }
           class="bg-transaction shadow-md p-[16px] rounded-lg"
         >
-          {transaction_text(actor1, actor2, price)}
+          {transaction_text(seller, buyer, price)}
         </div>
       </div>
     </div>
@@ -241,14 +238,7 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
     """
   end
 
-  defp transaction_text(actor1, actor2, price) do
-    {seller, buyer} =
-      if actor1.type == :seller do
-        {actor1.name, actor2.name}
-      else
-        {actor2.name, actor1.name}
-      end
-
+  defp transaction_text(seller, buyer, price) do
     gettext("%{seller} sells to %{buyer} at the price of %{price}",
       seller: bold(seller),
       buyer: bold(buyer),

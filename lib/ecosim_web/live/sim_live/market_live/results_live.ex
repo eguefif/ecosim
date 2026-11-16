@@ -20,7 +20,7 @@ defmodule EcosimWeb.SimLive.MarketLive.ResultsLive do
         <LineChartLive.plot_line
           title={gettext("Experience result 1")}
           labels={[gettext("Transactions")]}
-          values={[result_plot(@market)]}
+          values={[price_per_transaction_plot(@market)]}
         />
 
         <LineChartLive.plot_line
@@ -33,9 +33,11 @@ defmodule EcosimWeb.SimLive.MarketLive.ResultsLive do
     """
   end
 
-  defp market_plot(%Market{} = market), do: Market.market_plot_data(market)
-  defp result_plot(%Market{} = market), do: Market.result_plot_data(market)
+  defp market_plot(%Market{} = market), do: Market.info(market) |> Map.get(:market_plot)
+
+  defp price_per_transaction_plot(%Market{} = market),
+    do: Market.info(market) |> Map.get(:price_per_transaction_plot)
 
   defp transaction_per_period_plot(%Market{} = market),
-    do: Market.transaction_per_period_plot_data(market)
+    do: Market.info(market) |> Map.get(:transactions_per_period_plot)
 end
