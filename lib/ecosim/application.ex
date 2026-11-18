@@ -8,12 +8,14 @@ defmodule Ecosim.Application do
   @impl true
   def start(_type, _args) do
     :ets.new(:sim_registry, [:named_table, :set, :public])
+    :ets.insert(:sim_registry, {:next_id, 0})
 
     children = [
       EcosimWeb.Telemetry,
       Ecosim.Repo,
       {DNSCluster, query: Application.get_env(:ecosim, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Ecosim.PubSub},
+      {Registry, name: Ecosim.SimulationsRegistry, keys: :unique},
       # Start a worker by calling: Ecosim.Worker.start_link(arg)
       # {Ecosim.Worker, arg},
       # Start to serve requests, typically the last entry
