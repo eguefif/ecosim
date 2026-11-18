@@ -183,7 +183,7 @@ defmodule Ecosim.Sim.Market do
   @spec update(t(), :undo) :: {:ok, t()}
   @spec update(t(), :step_back) :: {:ok, t()} | {:back_to_start, t()}
   @spec update(t(), :step_forward) :: {:ok, t()}
-  @spec update(t(), :add_actor, add_actor_params()) :: {:ok, t()}
+  # @spec update(t(), :add_actor, add_actor_params()) :: {:ok, t()}
   @spec update(t(), :select_model, select_model_params()) ::
           {:ok, t()} | {:error, :market_model_does_not_exists}
   @spec update(t(), :accept, accept_params()) ::
@@ -331,14 +331,6 @@ defmodule Ecosim.Sim.Market do
   @spec get_specific_action(t(), Actor.t()) :: :sell_at | :buy_at
   defp get_specific_action(%__MODULE__{} = market, actor) do
     if actor in market.buyers, do: :buy_at, else: :sell_at
-  end
-
-  @doc """
-  Retrieve the current period actions.
-  """
-  @spec actions(t()) :: [Action.t()]
-  def actions(%__MODULE__{} = market) do
-    List.last(market.periods) |> Period.actions()
   end
 
   @spec info(t()) :: preparation_info()

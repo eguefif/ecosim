@@ -14,16 +14,20 @@ Ecosim is a website that provides economic simulators for high school teachers a
         - [x] `:preparation`: returns the current list of participants and market_model
         - [x] `:sim`: returns the list of transactions, the list of active actors with their last offer, actor's type and wt
         - [x] `:result`: returns the market_data, price_per_transaction, quantity per period datasets
+- [ ] Refactor `create_sim`: three steps. One to choose mode and sim, one to add participants
+    - [ ] Create the sim on def mount and register to registry.
+    - [ ] Add add_participants module.
+    - [ ] Add animated transition between step.
 - [ ] Create a `Simulator` module to handle logic and define state model
-    - [ ] Keep track of list of actors
-    - [ ] Keep track of simulation type via the Module name
-    - [ ] keep track of the joining code
+    - [x] Keep track of list of actors
+    - [x] Keep track of simulation type via the Module name
+    - [x] keep track of the joining code
     - [ ] Provides the following interface
         - [ ] `start_links(simulation_type)`, register the GenServer to the registry using via and create a joining code, returns a Simulator. Use the self() before starting the genserver to register the liveview as a event consummer.
-        - [ ] `join_code`: returns the join_code
-        - [ ] `add_participants`: add participants
-        - [ ] `update(command, params \\ %{})` update the sim
-        - [ ] `info()`: returns a map with the sim information
+        - [x] `join_code`: returns the join_code
+        - [x] `add_participants`: add participants
+        - [x] `update(command, params \\ %{})` update the sim
+        - [x] `info()`: returns a map with the sim information
 - [ ] Create a `SimulatorServer` to handle simulation state
     - [ ] Create a `Simulator`
     - [ ] Monitor the associated liveview process
@@ -51,7 +55,7 @@ Emmanuel Guefif
 
 The SimulationServer will provide the following function
 
-- new: takes a simulation type and register the caller proces to the consumer list of Pub/Sub
+- new: takes a simulation type and register the caller process to the consumer list of Pub/Sub
 - join: add a user and register the caller pid to an event consummer list for Pub/Sub
 - update_sim: call the Simulation.update function
 - info: call the Simulation.info function
@@ -67,7 +71,7 @@ Each module will provides the following function
     - if simulation step: returns info to show simulation state
     - if results step: returns results data
 
-### Pub/Sub mechanisme
+### Pub/Sub mechanism
 
 Each process, the simulation_liveview and user_liveview can update the simulator. Any time the Server receives update, at the end of the modification, it triggers a broadcast to all process to tell them the state has been updated.
 Upon receiving this message, all liveview process send a message via the info function and get the new state to display to the user.
