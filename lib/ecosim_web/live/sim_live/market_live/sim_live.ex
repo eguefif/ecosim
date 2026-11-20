@@ -1,21 +1,19 @@
 defmodule EcosimWeb.SimLive.MarketLive.SimLive do
   use EcosimWeb, :live_view
 
-  alias Ecosim.Sim.Market
-
-  attr :market, Market
+  attr :info, :map
   attr :offer_focus_actor_name, :string
 
   def sim(assigns) do
     ~H"""
     <div class="flex flex-col gap-[32px]">
       <.show_sim_action_buttons>
-        <.show_add_action_form actors={Market.info(@market) |> Map.get(:active_actors)} />
+        <.show_add_action_form actors={@info.active_actors} />
       </.show_sim_action_buttons>
-      <.show_periods periods={length(@market.periods)} current_period={@market.active_period_index} />
+      <.show_periods periods_length={@info.periods_length} current_period={@info.active_period_index} />
       <.show_current_period
-        info={Market.info(@market)}
-        actors={Market.info(@market) |> Map.get(:active_actors)}
+        info={@info}
+        actors={@info.active_actors}
         offer_focus_actor_name={@offer_focus_actor_name}
       />
     </div>
@@ -73,7 +71,7 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
     """
   end
 
-  attr :periods, :integer
+  attr :periods_length, :integer
   attr :current_period, :integer
 
   def show_periods(assigns) do
@@ -81,7 +79,7 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
     <div class="flex flex-row gap-[8px]">
       <.button phx-click="add-period"><.icon name="hero-plus" class="size-5" /></.button>
       <div
-        :for={n <- 0..(@periods - 1)}
+        :for={n <- 0..(@periods_length - 1)}
         class="btn btn-info"
         disabled={@current_period == n}
         phx-click="show-period"

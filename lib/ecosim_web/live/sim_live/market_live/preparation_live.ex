@@ -1,45 +1,27 @@
 defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
   use EcosimWeb, :live_view
-  alias EcosimWeb.SimLive.MarketLive.OneForAllModeLive, as: OneMode
-  alias EcosimWeb.SimLive.MarketLive.MultiModeLive, as: MultiMode
 
-  attr :mode, :string
-  attr :uploads, :map, required: true
-  attr :actors, :list
-  attr :actors_file, :string, default: nil
-  attr :market, Market
-  attr :join_code, :integer
+  alias Ecosim.SimServer
+
+  attr :sim_id, :integer
 
   def preparation(assigns) do
     ~H"""
     <div class="flex flex-col gap-[32px]">
-      <.show_preparation_action_buttons actors={@actors} actors_file={@actors_file} />
+      <.show_preparation_action_buttons sim_id={@sim_id} />
 
-      <MultiMode.preparation_multi
-        :if={@mode == "multi"}
-        join_code={@join_code}
-      />
-
-      <.show_market_model_choices market_choice={@market.market_model} />
-
-      <OneMode.preparation_one_for_all_mode
-        :if={@mode == "one-for-all"}
-        uploads={@uploads}
-      />
-
-      <.show_actors :if={@actors != []} actors={@actors} />
+      <.show_market_model_choices market_choice={market_choice(@sim_id)} />
     </div>
     """
   end
 
-  attr :actors, :list
-  attr :actors_file, :string
+  attr :sim_id, :integer
 
   def show_preparation_action_buttons(assigns) do
     ~H"""
     <div class="flex flex-row gap-[8px] justify-around shadow-md p-[16px] rounded-lg">
       <button
-        class={["btn btn-primary w-[96px] mx-auto", @actors == [] && "btn-disabled"]}
+        class={["btn btn-primary w-[96px] mx-auto"]}
         phx-click="start"
       >
         {gettext("Start")}
@@ -52,24 +34,21 @@ defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
       >
         {gettext("Use example list")}
       </button>
-      <div :if={@actors != []}>
-        <button
-          type="button"
-          name="click-generate-file"
-          phx-click="user-click-generate-file"
-          class="btn btn-secondary"
-        >
-          {gettext("Generate file")}
-        </button>
-      </div>
+      <button
+        type="button"
+        name="click-generate-file"
+        phx-click="user-click-generate-file"
+        class="btn btn-secondary"
+      >
+        {gettext("Generate file")}
+      </button>
       <a
-        :if={@actors_file != nil}
         id="download-actors"
-        href={"data:text/csv;base64," <> Base.encode64(@actors_file)}
+        href={"data:text/csv;base64," <> Base.encode64(sim_participants(@sim_id))}
         download="actors.csv"
         class="btn btn-secondary"
       >
-        {gettext("Download File")}
+        {gettext("Generate Actors File")}
       </a>
     </div>
     """
@@ -131,24 +110,7 @@ defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
     """
   end
 
-  attr :actors, :list, required: true
+  defp sim_participants(sim_id), do: SimServer.sim_participants(sim_id) |> Enum.join(", ")
 
-  def show_actors(assigns) do
-    ~H"""
-    <div class="divider text-xl">{gettext("Actors")}</div>
-    <ul id="actors" class="list gap-[4px]">
-      <li
-        :for={name <- @actors}
-        class="list-row items-baseline flex flex-row justify-between bg-info"
-      >
-        <div class="flex flex-row gap-[16px] items-baseline">
-          <span class="text-lg font-bold">{name}</span>
-        </div>
-        <button class="btn btn-square btn-ghost">
-          <.icon name="hero-x-mark" />
-        </button>
-      </li>
-    </ul>
-    """
-  end
+  defp market_choice(sim_id), do: SimServer.info(sim_id) |> Map.get(:market_model)
 end

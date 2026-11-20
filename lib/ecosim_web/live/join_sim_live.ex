@@ -1,6 +1,14 @@
 defmodule EcosimWeb.JoinSimLive do
   use EcosimWeb, :live_view
 
+  # TODO:: should retrieve the simulator from the code
+  # TODO: should check the type and push_navigate to the client market_live page
+  # TODO: this page will update the GenServer with the process pid
+  # TODO: it will implement a handle_info to get :update message from the GenServer
+  #          use the info function to get the new state.
+  # TODO: it will implement an handle_info to get :start message
+  #           Change the view to display participants info
+
   @impl true
   def render(assigns) do
     ~H"""

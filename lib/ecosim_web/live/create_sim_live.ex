@@ -1,10 +1,18 @@
 defmodule EcosimWeb.CreateSimLive do
   use EcosimWeb, :live_view
 
-  # TODO: create the sim_server when sim is choosen.
-  # TODO: when push navigate, call unmonitor_liveview
-  # TODO: add participants section
-  # TODO: update sim when participants
+  import EcosimWeb.CreateSimLive.Transitions
+  import EcosimWeb.CreateSimLive.ChooseSimComponent
+  import EcosimWeb.CreateSimLive.ChooseModeComponent
+  import EcosimWeb.CreateSimLive.AddParticipantsComponent
+
+  # TODO: MarketLive must take over the simulation: in mount/3, read
+  #   params["sim_id"] and call Ecosim.SimServer.monitor_liveview/1 when
+  #   connected?(socket), otherwise the server stops 30 seconds after "start-sim".
+  # TODO: add the multi mode
+  #     - show the join code
+  #     - implement an handle_info on :new_participant_sim from the gen server and retrieve the
+  #        participants list, display it.
 
   @impl true
   def render(assigns) do
@@ -13,195 +21,133 @@ defmodule EcosimWeb.CreateSimLive do
       {gettext("Create a simulation")}
     </.header>
     <div class="flex flex-col gap-[32px]">
-      <ul class="steps">
-        <li
-          class={[
-            "step step-primary",
-            numbered_step(@step) >= 2 &&
-              "hover:scale-104 duration-200 transform-transition ease-and-out"
-          ]}
-          phx-click={numbered_step(@step) >= 2 && go("back-to-choose-sim")}
-        >
-          {gettext("Choose Simulation")}
-        </li>
-        <li
-          class={[
-            "step",
-            numbered_step(@step) >= 2 &&
-              "step-primary hover:scale-104 duration-200 transform-transition ease-and-out"
-          ]}
-          phx-click={numbered_step(@step) >= 3 && go("back-to-choose-mode")}
-        >
-          {gettext("Choose Mode")}
-        </li>
-        <li class={["step", numbered_step(@step) >= 3 && "step-primary"]}>
-          {gettext("Add Participants")}
-        </li>
-      </ul>
+      <.show_steps_indicator step={@step} />
       <div id="steps">
         <div :if={@step == :choose_sim} id="step-choose-sim" phx-mounted={step_in()}>
-          <.choose_sim sim={@sim} />
+          <.choose_sim sim={sim_type(@sim)} />
         </div>
         <div :if={@step == :choose_mode} id="step-choose-mode" phx-mounted={step_in()}>
-          <.choose_mode mode={@mode} />
+          <.choose_mode mode={sim_mode(@sim)} />
         </div>
         <div :if={@step == :add_participants} id="step-add-participants" phx-mounted={step_in()}>
-          <.add_participants mode={@mode} />
+          <.add_participants
+            mode={sim_mode(@sim)}
+            uploads={@uploads}
+            participants={@participants}
+          />
         </div>
       </div>
+      <div class="flex flex-row w-max gap-[32px]">
+        <button
+          :if={@step != :choose_sim}
+          id="back-btn"
+          class="btn btn-primary w-[96px] mx-auto"
+          phx-click={go("back")}
+        >
+          {gettext("Back")}
+        </button>
+        <button
+          :if={@step != :choose_sim && @participants != []}
+          id="start-sim"
+          class="btn btn-secondary w-[96px] mx-auto"
+          phx-click="start-sim"
+        >
+          {gettext("Start")}
+        </button>
+      </div>
+    </div>
+    """
+  end
 
-      <button
-        :if={@step != :choose_sim}
-        id="back-btn"
-        class="btn btn-primary w-[96px] mx-auto"
-        phx-click={go("back")}
+  attr :step, :integer, default: 0
+
+  def show_steps_indicator(assigns) do
+    ~H"""
+    <ul class="steps w-full">
+      <li
+        class={[
+          "step step-primary",
+          numbered_step(@step) >= 2 &&
+            "hover:scale-104 duration-200 transform-transition ease-and-out"
+        ]}
+        phx-click={numbered_step(@step) >= 2 && go("back-to-choose-sim")}
       >
-        {gettext("Back")}
-      </button>
-    </div>
-    """
-  end
-
-  attr :sim, :string, default: nil
-
-  def choose_sim(assigns) do
-    ~H"""
-    <div class="flex flex-row gap-[16px]">
-      <div class={[@sim == "market" && "aura"]}>
-        <div
-          class={[
-            "card bg-base-100 w-[256px] shadow-md hover:scale-102 hover:pointer transition-transform duration-200 ease-in-out"
-          ]}
-          phx-click={go("choose-sim", %{sim: "market"})}
-        >
-          <figure>
-            <img src={~p"/images/market-card.jpg"} alt={gettext("Market")} />
-          </figure>
-          <div class="card-body">
-            <h2 class="card-title">
-              {gettext("The Market")}
-            </h2>
-            <p>{gettext("Simulate a market following Vernon Smith's 1962 protocol.")}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  attr :mode, :string, default: nil
-
-  def choose_mode(assigns) do
-    ~H"""
-    <div class="flex flex-row gap-[32px] transform-transition">
-      <div class={[@mode == "one-for-all" && "aura"]}>
-        <div
-          class={[
-            "card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out hover:pointer"
-          ]}
-          phx-click={go("choose-mode", %{mode: "one-for-all"})}
-        >
-          <div class="card-body">
-            <h2 class="card-title">
-              {gettext("One user for all")}
-            </h2>
-            <p>
-              {gettext(
-                "In this mode, one user provides the list of economic actors and records every action."
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class={[@mode == "multi" && "aura"]}>
-        <div
-          class="card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out hover:pointer"
-          phx-click={go("choose-mode", %{mode: "multi"})}
-        >
-          <div class="card-body">
-            <h2 class="card-title">
-              {gettext("Multi-user")}
-            </h2>
-            <p>
-              {gettext(
-                "In this mode, each user uses their own device and joins the simulation with a code."
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class={[@mode == "bot" && "aura"]}>
-        <div
-          class="card bg-base-100 w-[256px] h-[192px] shadow-md hover:scale-104 duration-200 transition-transform ease-in-out hover:pointer"
-          phx-click={go("choose-mode", %{mode: "bot"})}
-        >
-          <div class="card-body">
-            <h2 class="card-title">
-              {gettext("One user with bots")}
-            </h2>
-            <p>
-              {gettext("In this mode, one user runs the simulation with bots.")}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  attr :mode, :string
-
-  def add_participants(assigns) do
-    ~H"""
-    {@mode}
+        {gettext("Choose Simulation")}
+      </li>
+      <li
+        class={[
+          "step",
+          numbered_step(@step) >= 2 &&
+            "step-primary hover:scale-104 duration-200 transform-transition ease-and-out"
+        ]}
+        phx-click={numbered_step(@step) >= 3 && go("back-to-choose-mode")}
+      >
+        {gettext("Choose Mode")}
+      </li>
+      <li class={["step", numbered_step(@step) >= 3 && "step-primary"]}>
+        {gettext("Add Participants")}
+      </li>
+    </ul>
     """
   end
 
   # defp build_sim_route("market", mode), do: ~p"/sim/market?mode=#{mode}"
 
-  defp step_in do
-    JS.transition(
-      {"ease-out duration-500", "opacity-0 translate-x-8", "opacity-100 translate-x-0"},
-      time: 500
-    )
-  end
-
-  # Animates the current step out, then sends the event. LiveView holds back
-  # the DOM patch until the hide transition finishes, so the next step only
-  # appears (and runs its phx-mounted step_in) once the old one is gone.
-  defp go(event, value \\ %{}) do
-    JS.hide(
-      to: "#steps > div",
-      transition:
-        {"ease-in duration-300", "opacity-100 translate-x-0", "opacity-0 -translate-x-16"},
-      time: 300
-    )
-    |> JS.push(event, value: value)
+  defp parse_participants(content) do
+    content
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim(&1))
+    |> Enum.reject(&(&1 == ""))
   end
 
   defp numbered_step(:choose_sim), do: 1
   defp numbered_step(:choose_mode), do: 2
   defp numbered_step(:add_participants), do: 3
 
+  defp sim_type(sim) do
+    case Ecosim.SimServer.type(sim) do
+      nil -> nil
+      type when is_atom(type) -> Atom.to_string(type)
+    end
+  end
+
+  defp sim_mode(sim) do
+    case Ecosim.SimServer.mode(sim) do
+      nil -> nil
+      mode when is_atom(mode) -> Atom.to_string(mode)
+    end
+  end
+
+  # Mount ***********************************************************************
+
   @impl true
   def mount(_parms, _session, socket) do
+    {:ok, sim} = Ecosim.SimServer.start()
+
     {:ok,
      socket
      |> assign(:step, :choose_sim)
-     |> assign(:sim, nil)
-     |> assign(:mode, nil)}
+     |> assign(:sim, sim)
+     |> assign(:participants, [])
+     |> allow_upload(:participants,
+       accept: ~w(.txt .csv),
+       max_entries: 1,
+       max_file_size: 1_000_000
+     )}
   end
 
+  # Events ***********************************************************************
+
   @impl true
-  def handle_event("choose-sim", %{"sim" => sim}, socket) do
-    {:noreply, socket |> assign(:sim, sim) |> assign(:step, :choose_mode)}
+  def handle_event("choose-sim", %{"sim" => sim_type}, socket) do
+    :ok = Ecosim.SimServer.set_sim_type(socket.assigns.sim, sim_type)
+    {:noreply, socket |> assign(:step, :choose_mode)}
   end
 
   @impl true
   def handle_event("choose-mode", %{"mode" => mode}, socket) do
-    {:noreply, socket |> assign(:mode, mode) |> assign(:step, :add_participants)}
+    :ok = Ecosim.SimServer.set_sim_mode(socket.assigns.sim, mode)
+    {:noreply, socket |> assign(:step, :add_participants)}
   end
 
   @impl true
@@ -221,5 +167,47 @@ defmodule EcosimWeb.CreateSimLive do
   @impl true
   def handle_event("back-to-choose-mode", %{}, socket) do
     {:noreply, socket |> assign(:step, :choose_mode)}
+  end
+
+  @impl true
+  def handle_event("remove-participant", %{"participant" => participant}, socket) do
+    participants = socket.assigns.participants |> Enum.reject(&(&1 == participant))
+    {:noreply, socket |> assign(:participants, participants)}
+  end
+
+  def handle_event("start-sim", %{}, socket) do
+    sim_id = socket.assigns.sim
+
+    :ok = Ecosim.SimServer.add_participants_to_simulation(sim_id, socket.assigns.participants)
+    sim_path = Ecosim.SimServer.route_path(sim_id)
+
+    :ok = Ecosim.SimServer.demonitor_liveview(sim_id)
+    :ok = Ecosim.SimServer.create_simulation(sim_id)
+
+    {:noreply, push_navigate(socket, to: sim_path)}
+  end
+
+  # Participants upload (one-for-all mode) *********************************
+
+  @impl true
+  def handle_event("validate_upload", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("cancel_upload", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :participants, ref)}
+  end
+
+  @impl true
+  def handle_event("save_upload", _params, socket) do
+    content =
+      socket
+      |> consume_uploaded_entries(:participants, fn %{path: path}, _entry ->
+        {:ok, File.read!(path)}
+      end)
+      |> List.first()
+
+    {:noreply, assign(socket, :participants, parse_participants(content))}
   end
 end
