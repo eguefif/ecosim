@@ -49,7 +49,11 @@ defmodule Ecosim.Sim.Market do
   @type transaction() :: [%{index: integer(), price: number()}]
   @type step() :: :preparation | :sim | :result
 
-  @type preparation_info() :: %{actors: [Actor.t()]}
+  @type preparation_info() :: %{
+          actors: [Actor.t()],
+          step: atom(),
+          market_model: integer()
+        }
   @type sim_info() :: %{
           transactions: [Action.t()],
           sellers: [%{actor: String.t(), last_offer: number()}],
@@ -152,262 +156,295 @@ defmodule Ecosim.Sim.Market do
     new(buyers, sellers, market_model)
   end
 
-  @doc """
-  Update the market according to the action and params.
-  Possible actions `t:action/0`:
-  - :add_period: create a new period with the list of actors: buyers ++ sellers
-  - :buy_at
-  - :sell_at
-  - :accept
+  defimpl Ecosim.SimulationProtocol do
+    @doc """
+    Update the market according to the action and params.
+    Possible actions `t:action/0`:
+    - :add_period: create a new period with the list of actors: buyers ++ sellers
+    - :buy_at
+    - :sell_at
+    - :accept
 
-  ### Params
-  It depends on the action.
-  - :add_period => no params
-  - :buy_at, :sell_at => %{actor: Actor.t(), price: number()}
-  - :accept => %{actor: Actor.t()}
+    ### Params
+    It depends on the action.
+    - :add_period => no params
+    - :buy_at, :sell_at => %{actor: Actor.t(), price: number()}
+    - :accept => %{actor: Actor.t()}
 
-  ### Accept
+    ### Accept
 
-  When an actor accept a price, it will automactillay takes the price depending on what type
-  the actor is. If their are buyers, it will take the last seller's price offer and vice versa.
-  Then, it creates a transaction action in the list of events and removes both actors from the period
-  list of actors.
+    When an actor accept a price, it will automactillay takes the price depending on what type
+    the actor is. If their are buyers, it will take the last seller's price offer and vice versa.
+    Then, it creates a transaction action in the list of events and removes both actors from the period
+    list of actors.
 
-  If there are no price offers, it returns the market with no modification.
+    If there are no price offers, it returns the market with no modification.
 
-  ### Error
-  - :price_not_in_wt: means that for a buyer, price is above WTB, for a seller
-                      price is below WTA.
-  """
-  @spec update(t(), :add_period) :: {:ok, t()}
-  @spec update(t(), :undo) :: {:ok, t()}
-  @spec update(t(), :step_back) :: {:ok, t()} | {:back_to_start, t()}
-  @spec update(t(), :step_forward) :: {:ok, t()}
-  # @spec update(t(), :add_actor, add_actor_params()) :: {:ok, t()}
-  @spec update(t(), :select_model, select_model_params()) ::
-          {:ok, t()} | {:error, :market_model_does_not_exists}
-  @spec update(t(), :accept, accept_params()) ::
-          {:ok, t()} | {:error, :price_not_in_wt}
-  @spec update(t(), :offer, Action.offer_params()) ::
-          {:ok, t()} | {:error, :price_not_in_wt}
+    ### Error
+    - :price_not_in_wt: means that for a buyer, price is above WTB, for a seller
+                        price is below WTA.
+    """
+    @spec update(@for.t(), :restart_sim, map()) :: {:ok, @for.t()}
+    @spec update(@for.t(), :add_period, map()) :: {:ok, @for.t()}
+    @spec update(@for.t(), :undo, map()) :: {:ok, @for.t()}
+    @spec update(@for.t(), :step_back, map()) :: {:ok, @for.t()}
+    @spec update(@for.t(), :step_forward, map()) :: {:ok, @for.t()}
+    # @spec update(@for.t(), :add_actor, add_actor_params()) :: {:ok, @for.t()}
+    @spec update(@for.t(), :select_model, @for.select_model_params()) ::
+            {:ok, @for.t()} | {:error, :market_model_does_not_exists}
+    @spec update(@for.t(), :accept, @for.accept_params()) ::
+            {:ok, @for.t()} | {:error, :price_not_in_wt}
+    @spec update(@for.t(), :offer, Action.offer_params()) ::
+            {:ok, @for.t()} | {:error, :price_not_in_wt}
 
-  @spec update(t(), :change_active_period, change_active_period_params()) ::
-          {:ok, t()} | {:error, :out_of_range}
+    @spec update(@for.t(), :change_active_period, @for.change_active_period_params()) ::
+            {:ok, @for.t()} | {:error, :out_of_range}
 
-  def update(%__MODULE__{} = market, :add_period) do
-    {:ok,
-     %__MODULE__{
-       market
-       | periods: List.insert_at(market.periods, -1, Period.new(market.buyers ++ market.sellers)),
-         active_period_index: market.active_period_index + 1
-     }}
-  end
+    def update(%@for{} = market, :add_period, _params) do
+      {:ok,
+       %@for{
+         market
+         | periods:
+             List.insert_at(market.periods, -1, Period.new(market.buyers ++ market.sellers)),
+           active_period_index: market.active_period_index + 1
+       }}
+    end
 
-  def update(%__MODULE__{} = market, :undo) do
-    {:ok, undo(market)}
-  end
+    def update(%@for{} = market, :undo, _params) do
+      {:ok, undo(market)}
+    end
 
-  def update(%__MODULE__{step: :preparation} = market, :step_back) do
-    {
-      :back_to_start,
-      market
-    }
-  end
-
-  def update(%__MODULE__{step: :sim} = market, :step_back) do
-    {:ok,
-     %__MODULE__{
-       market
-       | step: :preparation
-     }}
-  end
-
-  def update(%__MODULE__{step: :result} = market, :step_back) do
-    {:ok,
-     %__MODULE__{
-       market
-       | step: :sim
-     }}
-  end
-
-  def update(%__MODULE__{step: :preparation} = market, :step_forward) do
-    {:ok,
-     %{
-       market
-       | step: :sim
-     }}
-  end
-
-  def update(%__MODULE__{step: :sim} = market, :step_forward) do
-    {:ok,
-     %{
-       market
-       | step: :result
-     }}
-  end
-
-  def update(%__MODULE__{step: :result} = market, :step_forward) do
-    {
-      %{
+    def update(%@for{step: :preparation} = market, :step_back, _params) do
+      {
+        :ok,
         market
-        | step: :result
-      },
-      :ok
-    }
-  end
-
-  def update(%__MODULE__{periods: periods} = market, :change_active_period, %{
-        period: period_index
-      })
-      when period_index >= 0 and period_index < length(periods) do
-    {
-      :ok,
-      %__MODULE__{
-        market
-        | active_period_index: period_index
       }
-    }
-  end
-
-  def update(%__MODULE__{} = _, :change_active_period, _), do: {:error, :out_of_range}
-
-  def update(%__MODULE__{} = market, :select_model, %{market_model: market_model})
-      when market_model in [1, 2, 3] do
-    {:ok,
-     %__MODULE__{
-       market
-       | market_model: market_model
-     }}
-  end
-
-  def update(%__MODULE__{} = _, :select_model, %{market_model: market_model})
-      when market_model not in [1, 2, 3] do
-    {:error, :market_model_does_not_exists}
-  end
-
-  def update(
-        %__MODULE__{} = market,
-        :accept,
-        %{buyer: buyer, seller: seller, price: price}
-      ) do
-    period_index = market.active_period_index
-
-    if check_wt(buyer, price) && check_wt(seller, price) do
-      {:ok,
-       %__MODULE__{
-         market
-         | periods:
-             List.update_at(market.periods, period_index, fn period ->
-               Period.add_action(period, :accept, %{actors: [seller, buyer], price: price})
-             end)
-       }}
-    else
-      {:error, :price_not_in_wt}
     end
-  end
 
-  def update(%__MODULE__{} = market, :offer, %{actor: actor, price: price} = params) do
-    period_index = market.active_period_index
-    action = get_specific_action(market, actor)
-
-    if Actor.price_regarding_wt?(actor, price) do
+    def update(%@for{step: :sim} = market, :step_back, _params) do
       {:ok,
-       %{
+       %@for{
          market
-         | periods:
-             List.update_at(market.periods, period_index, fn period ->
-               Period.add_action(period, action, params)
-             end)
+         | step: :preparation
        }}
-    else
-      {:error, :price_not_in_wt}
     end
-  end
 
-  @spec check_wt(Actor.t(), number()) :: boolean()
-  defp check_wt(%Actor{type: :buyer, wt: wt}, price), do: price <= wt
-  defp check_wt(%Actor{type: :seller, wt: wt}, price), do: price >= wt
+    def update(%@for{step: :result} = market, :step_back, _params) do
+      {:ok,
+       %@for{
+         market
+         | step: :sim
+       }}
+    end
 
-  @spec get_specific_action(t(), Actor.t()) :: :sell_at | :buy_at
-  defp get_specific_action(%__MODULE__{} = market, actor) do
-    if actor in market.buyers, do: :buy_at, else: :sell_at
-  end
+    def update(%@for{step: :preparation} = market, :step_forward, _params) do
+      {:ok,
+       %@for{
+         market
+         | step: :sim
+       }}
+    end
 
-  @spec info(t()) :: preparation_info()
-  def info(%__MODULE__{step: :preparation, sellers: sellers, buyers: buyers} = _) do
-    %{
-      actors: sellers ++ buyers
-    }
-  end
+    def update(%@for{step: :sim} = market, :step_forward, _params) do
+      {:ok,
+       %@for{
+         market
+         | step: :result
+       }}
+    end
 
-  @spec info(t()) :: sim_info()
-  def info(%__MODULE__{step: :sim} = market) do
-    active_period(market)
-    |> Period.info()
-  end
+    def update(%@for{step: :result} = market, :step_forward, _params) do
+      {
+        :ok,
+        %@for{
+          market
+          | step: :result
+        }
+      }
+    end
 
-  @spec info(t()) :: result_info()
-  def info(%__MODULE__{step: :result} = market) do
-    %{
-      market_plot: market_plot_data(market),
-      price_per_transaction_plot: price_per_transaction_plot(market),
-      transactions_per_period_plot: transaction_per_period_plot_data(market)
-    }
-  end
+    def update(%@for{} = market, :restart_sim, _params) do
+      {:ok, @for.new(market)}
+    end
 
-  defp active_period(%__MODULE__{} = market) do
-    Enum.at(market.periods, market.active_period_index)
-  end
+    def update(%@for{periods: periods} = market, :change_active_period, %{
+          period: period_index
+        })
+        when period_index >= 0 and period_index < length(periods) do
+      {
+        :ok,
+        %@for{
+          market
+          | active_period_index: period_index
+        }
+      }
+    end
 
-  @spec undo(t()) :: t()
-  defp undo(%__MODULE__{} = market) do
-    period_index = market.active_period_index
+    def update(%@for{} = _, :change_active_period, _), do: {:error, :out_of_range}
 
-    periods =
-      List.update_at(market.periods, period_index, fn period ->
-        period |> Period.remove_last_action()
+    def update(%@for{} = market, :select_model, %{market_model: market_model})
+        when market_model in [1, 2, 3] do
+      {:ok,
+       %@for{
+         market
+         | market_model: market_model
+       }}
+    end
+
+    def update(%@for{} = _, :select_model, %{market_model: market_model})
+        when market_model not in [1, 2, 3] do
+      {:error, :market_model_does_not_exists}
+    end
+
+    def update(
+          %@for{} = market,
+          :accept,
+          %{buyer: buyer, seller: seller, price: price}
+        ) do
+      period_index = market.active_period_index
+
+      if check_wt(buyer, price) && check_wt(seller, price) do
+        {:ok,
+         %@for{
+           market
+           | periods:
+               List.update_at(market.periods, period_index, fn period ->
+                 Period.add_action(period, :accept, %{actors: [seller, buyer], price: price})
+               end)
+         }}
+      else
+        {:error, :price_not_in_wt}
+      end
+    end
+
+    def update(%@for{} = market, :offer, %{actor: actor, price: price} = params) do
+      period_index = market.active_period_index
+      action = get_specific_action(market, actor)
+
+      if Actor.price_regarding_wt?(actor, price) do
+        {:ok,
+         %{
+           market
+           | periods:
+               List.update_at(market.periods, period_index, fn period ->
+                 Period.add_action(period, action, params)
+               end)
+         }}
+      else
+        {:error, :price_not_in_wt}
+      end
+    end
+
+    @spec check_wt(Actor.t(), number()) :: boolean()
+    defp check_wt(%Actor{type: :buyer, wt: wt}, price), do: price <= wt
+    defp check_wt(%Actor{type: :seller, wt: wt}, price), do: price >= wt
+
+    @spec get_specific_action(@for.t(), Actor.t()) :: :sell_at | :buy_at
+    defp get_specific_action(%@for{} = market, actor) do
+      if actor in market.buyers, do: :buy_at, else: :sell_at
+    end
+
+    @spec info(@for.t()) :: @for.preparation_info()
+    def info(
+          %@for{
+            step: :preparation,
+            sellers: sellers,
+            buyers: buyers,
+            market_model: market_model
+          } =
+            _
+        ) do
+      %{
+        actors: sellers ++ buyers,
+        market_model: market_model,
+        step: :preparation
+      }
+    end
+
+    @doc """
+    Returns information on the market adapted to the simulation step.
+    - active actors
+    - sellers list
+    - buyers list
+    - list of transactions
+    - periods
+    - active current_periods
+    """
+    @spec info(@for.t()) :: @for.sim_info()
+    def info(%@for{step: :sim} = market) do
+      active_period(market)
+      |> Period.info()
+      |> Map.merge(%{
+        periods_length: length(market.periods),
+        active_period_index: market.active_period_index,
+        step: market.step
+      })
+    end
+
+    @spec info(@for.t()) :: @for.result_info()
+    def info(%@for{step: :result} = market) do
+      %{
+        step: market.step,
+        market_plot: market_plot_data(market),
+        price_per_transaction_plot: price_per_transaction_plot(market),
+        transactions_per_period_plot: transaction_per_period_plot_data(market)
+      }
+    end
+
+    defp active_period(%@for{} = market) do
+      Enum.at(market.periods, market.active_period_index)
+    end
+
+    @spec undo(@for.t()) :: @for.t()
+    defp undo(%@for{} = market) do
+      period_index = market.active_period_index
+
+      periods =
+        List.update_at(market.periods, period_index, fn period ->
+          period |> Period.remove_last_action()
+        end)
+
+      %{market | periods: periods}
+    end
+
+    @spec market_plot_data(@for.t()) :: [list()]
+    defp market_plot_data(%@for{} = market) do
+      sellers =
+        Enum.map(market.sellers, & &1.wt)
+        |> Enum.sort()
+        |> Enum.with_index(fn wt, idx ->
+          %{x: idx + 1, y: wt}
+        end)
+
+      {buyers, _} =
+        Enum.map(market.buyers, & &1.wt)
+        |> Enum.sort()
+        |> Enum.map_reduce(length(market.buyers), fn wt, acc ->
+          {%{x: acc, y: wt}, acc - 1}
+        end)
+
+      [buyers, sellers]
+    end
+
+    @spec price_per_transaction_plot(@for.t()) :: list()
+    defp price_per_transaction_plot(%@for{} = market) do
+      Enum.flat_map(market.periods, & &1.actions)
+      |> Enum.filter(&(&1.action == :transact))
+      |> Enum.with_index(fn %{params: %{price: price}} = _, idx ->
+        %{x: idx + 1, y: price}
       end)
+    end
 
-    %{market | periods: periods}
-  end
+    @spec transaction_per_period_plot_data(@for.t()) :: list()
+    defp transaction_per_period_plot_data(%@for{} = market) do
+      market.periods
+      |> Enum.with_index(fn period, idx ->
+        quantity =
+          Enum.filter(period.actions, &(&1.action == :transact))
+          |> length()
 
-  @spec market_plot_data(t()) :: [list()]
-  defp market_plot_data(%__MODULE__{} = market) do
-    sellers =
-      Enum.map(market.sellers, & &1.wt)
-      |> Enum.sort()
-      |> Enum.with_index(fn wt, idx ->
-        %{x: idx + 1, y: wt}
+        %{x: idx + 1, y: quantity}
       end)
-
-    {buyers, _} =
-      Enum.map(market.buyers, & &1.wt)
-      |> Enum.sort()
-      |> Enum.map_reduce(length(market.buyers), fn wt, acc ->
-        {%{x: acc, y: wt}, acc - 1}
-      end)
-
-    [buyers, sellers]
-  end
-
-  @spec price_per_transaction_plot(t()) :: list()
-  defp price_per_transaction_plot(%__MODULE__{} = market) do
-    Enum.flat_map(market.periods, & &1.actions)
-    |> Enum.filter(&(&1.action == :transact))
-    |> Enum.with_index(fn %{params: %{price: price}} = _, idx ->
-      %{x: idx + 1, y: price}
-    end)
-  end
-
-  @spec transaction_per_period_plot_data(t()) :: list()
-  defp transaction_per_period_plot_data(%__MODULE__{} = market) do
-    market.periods
-    |> Enum.with_index(fn period, idx ->
-      quantity =
-        Enum.filter(period.actions, &(&1.action == :transact))
-        |> length()
-
-      %{x: idx + 1, y: quantity}
-    end)
+    end
   end
 end

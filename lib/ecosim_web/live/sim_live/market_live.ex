@@ -1,6 +1,8 @@
 defmodule EcosimWeb.Sim.MarketLive do
   use EcosimWeb, :live_view
 
+  alias Ecosim.SimulationProtocol
+  alias Ecosim.SimServer
   alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Actor
 
@@ -9,33 +11,33 @@ defmodule EcosimWeb.Sim.MarketLive do
   alias EcosimWeb.SimLive.MarketLive.ResultsLive, as: Results
   alias EcosimWeb.SimLive.MarketLive.SimLive, as: Sim
 
+  # TODO: if the mode is one-for-all, allow the user to generate a file with
+  # distribution and wt
+  # TODO: also allow the user to upload the same file to set the participants correctly.
+
   @impl true
   def render(assigns) do
+    # TODO: check if we can pass @info to preparation
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.market_header mode={@mode} />
 
       <Preparation.preparation
-        :if={@market.step == :preparation}
-        mode={@mode}
-        uploads={@uploads}
-        market={@market}
-        actors={@actors}
-        actors_file={@actors_file}
-        join_code={3_123_124}
+        :if={@info.step == :preparation}
+        sim_id={@sim_id}
       />
 
       <Sim.sim
-        :if={@market.step == :sim}
-        market={@market}
+        :if={@info.step == :sim}
+        info={@info}
         offer_focus_actor_name={@offer_focus_actor_name}
       />
 
       <Results.result
-        :if={@market.step == :result}
-        market={@market}
+        :if={@info.step == :result}
+        info={@info}
       />
-      {inspect(@market.periods)}
+      {inspect(@info)}
     </Layouts.app>
     """
   end
@@ -61,125 +63,86 @@ defmodule EcosimWeb.Sim.MarketLive do
     """
   end
 
-  defp get_mode("one-for-all"), do: gettext("One user for all")
-  defp get_mode("bot"), do: gettext("One user with bots")
-  defp get_mode("multi"), do: gettext("Multi-user")
+  defp get_mode(:one_for_all), do: gettext("One user for all")
+  defp get_mode(:bot), do: gettext("One user with bots")
+  defp get_mode(:multi), do: gettext("Multi-user")
 
   @impl true
-  def mount(%{"mode" => mode}, _session, socket) do
-    # market = Market.new([], [], 1)
-    market = build_test_market(with_history: true)
-    {:ok, market} = Market.update(market, :step_forward)
+  def mount(%{"sim_id" => sim_id}, _session, socket) do
+    sim_id = String.to_integer(sim_id)
+    if connected?(socket), do: SimServer.monitor_liveview(sim_id)
 
-    # join_code = if mode == "multi", do: :rand.uniform(10000), else: nil
-    # :ets.insert(:sim_registry, {join_code, "market"})
+    SimServer.inspect_sim(sim_id)
 
     {:ok,
      socket
-     |> assign(:mode, mode)
      |> assign(:client_info, SimLog.client_info(socket))
-     |> assign(:market, market)
-     |> assign(:actors_file, nil)
-     |> assign(:actors, [])
+     |> assign(:sim_id, sim_id)
+     |> assign(:mode, SimServer.mode(sim_id))
+     |> assign(:info, SimServer.info(sim_id))
      |> assign(:market_model, 1)
-     |> assign(:offer_focus_actor_name, nil)
-     |> allow_upload(:actors,
-       accept: ~w(.txt .csv),
-       max_entries: 1,
-       max_file_size: 1_000_000
-     )}
+     |> assign(:offer_focus_actor_name, nil)}
   end
 
   @impl true
   def handle_event("back", _, socket) do
-    market = socket.assigns.market
+    sim_id = socket.assigns.sim_id
 
-    socket =
-      case Market.update(market, :step_back) do
-        {:back_to_start, _} -> socket |> push_navigate(to: ~p"/create-sim")
-        {:ok, market} -> assign(socket, :market, market)
-      end
+    {:ok, info} =
+      SimServer.update(sim_id, :step_back, %{})
 
-    {:noreply, socket}
+    {:noreply, socket |> assign(:info, info)}
   end
 
   # Preparation Events ****************************************************
 
   def handle_event("user-click-generate-file", _, socket) do
-    market = Market.new(socket.assigns.actors, socket.assigns.market_model)
-
-    file = create_file(market.buyers ++ market.sellers)
+    info = socket.assigns.info
+    file = create_file(info.buyers ++ info.sellers)
 
     {:noreply,
      socket
-     |> assign(:actors_file, file)
-     |> assign(:market, market)
-     |> assign(:period_index, 0)}
+     |> assign(:actors_file, file)}
   end
 
   def handle_event("start", _, socket) do
-    IO.puts("HEY")
-    IO.inspect(socket.assigns.market)
-    {:ok, market} = socket.assigns.market |> Market.update(:step_forward)
-    IO.inspect(market)
+    {:ok, info} = socket.assigns.sim_id |> SimServer.update(:step_forward)
 
-    {:noreply,
-     assign(socket, :step, :sim)
-     |> assign(:market, market)
-     |> assign(:period_index, 0)}
+    {:noreply, socket |> assign(:info, info)}
   end
 
   def handle_event("select-model", %{"model" => market_model}, socket) do
     market_model = String.to_integer(market_model)
 
-    {:ok, market} =
-      socket.assigns.market |> Market.update(:select_model, %{market_model: market_model})
+    {:ok, info} =
+      socket.assigns.sim_id
+      |> SimServer.update(:select_model, %{market_model: market_model})
 
-    {:noreply, socket |> assign(:market, market)}
+    {:noreply, socket |> assign(:info, info)}
   end
 
-  def handle_event("user-click-default-button", %{}, socket) do
-    {:ok, market} = build_test_market() |> Market.update(:step_forward)
+  # TODO: Handle this button with GenServer
+  # def handle_event("user-click-default-button", %{}, socket) do
+  #  {:ok, market} = build_test_market() |> SimServer.update(:step_forward, %{})
 
-    log_sim_started(socket, market, :example)
+  #  log_sim_started(socket, market, :example)
 
-    {:noreply,
-     socket
-     |> assign(:market, market)}
-  end
-
-  def handle_event("validate_upload", _params, socket) do
-    {:noreply, socket}
-  end
-
-  def handle_event("cancel_upload", %{"ref" => ref}, socket) do
-    {:noreply, cancel_upload(socket, :actors, ref)}
-  end
-
-  def handle_event("save_upload", _params, socket) do
-    content =
-      socket
-      |> consume_uploaded_entries(:actors, fn %{path: path}, _entry ->
-        {:ok, File.read!(path)}
-      end)
-      |> List.first()
-
-    actors = parse_content(content)
-
-    {:noreply, assign(socket, :actors, actors)}
-  end
+  #  {:noreply,
+  #   socket
+  #   |> assign(:market, market)}
+  # end
 
   # Simulation Events ***************************************************
 
   def handle_event("restart-sim", _, socket) do
-    market = Market.new(socket.assigns.market)
-    {:noreply, assign(socket, :market, market) |> assign(:period_index, 0)}
+    {:ok, info} = socket.assigns.sim_id |> SimServer.update(:restart_sim)
+    {:noreply, assign(socket, :info, info) |> assign(:period_index, 0)}
   end
 
   def handle_event(
         "add-action",
         %{"actor" => action_actor_name, "price" => price},
-        %{assigns: %{market: market}} = socket
+        %{assigns: %{sim_id: sim_id}} = socket
       ) do
     price =
       case Integer.parse(price) do
@@ -187,14 +150,14 @@ defmodule EcosimWeb.Sim.MarketLive do
         {number, _} -> number
       end
 
-    case actor(market, action_actor_name) do
+    case actor(sim_id, action_actor_name) do
       nil ->
         {:noreply, put_flash(socket, :error, gettext("The given actor does not exist."))}
 
       actor ->
-        case Market.update(market, :offer, %{actor: actor, price: price}) do
-          {:ok, market} ->
-            {:noreply, socket |> assign(:market, market)}
+        case SimServer.update(sim_id, :offer, %{actor: actor, price: price}) do
+          {:ok, info} ->
+            {:noreply, socket |> assign(:info, info)}
 
           {:error, :price_not_in_wt} ->
             {:noreply,
@@ -228,11 +191,11 @@ defmodule EcosimWeb.Sim.MarketLive do
         %{"actors-input-seller" => actor, "price" => price},
         socket
       ) do
-    market = socket.assigns.market
-    seller = actor(market, actor)
-    buyer = actor(market, socket.assigns.offer_focus_actor_name)
+    sim_id = socket.assigns.sim_id
+    seller = actor(sim_id, actor)
+    buyer = actor(sim_id, socket.assigns.offer_focus_actor_name)
 
-    handle_accept(market, seller, buyer, price, socket)
+    handle_accept(sim_id, seller, buyer, price, socket)
   end
 
   def handle_event(
@@ -240,64 +203,63 @@ defmodule EcosimWeb.Sim.MarketLive do
         %{"actors-input-buyer" => actor, "price" => price},
         socket
       ) do
-    market = socket.assigns.market
-    buyer = actor(market, actor)
-    seller = actor(market, socket.assigns.offer_focus_actor_name)
+    sim_id = socket.assigns.sim_id
+    buyer = actor(sim_id, actor)
+    seller = actor(sim_id, socket.assigns.offer_focus_actor_name)
 
-    handle_accept(market, seller, buyer, price, socket)
+    handle_accept(sim_id, seller, buyer, price, socket)
   end
 
   def handle_event("undo-last-action", %{}, socket) do
-    {:ok, market} =
-      Market.update(
-        socket.assigns.market,
-        :undo
+    {:ok, info} =
+      SimServer.update(
+        socket.assigns.sim_id,
+        :undo,
+        %{}
       )
 
     {:noreply,
      assign(
        socket,
-       :market,
-       market
+       :info,
+       info
      )}
   end
 
   def handle_event("add-period", %{}, socket) do
-    {:ok, market} = Market.update(socket.assigns.market, :add_period)
-    {:noreply, assign(socket, :market, market)}
+    {:ok, info} = SimServer.update(socket.assigns.sim_id, :add_period)
+    {:noreply, assign(socket, :info, info)}
   end
 
   def handle_event("show-period", %{"period" => period_index}, socket) do
     period_index = String.to_integer(period_index)
 
-    {:ok, market} =
-      socket.assigns.market |> Market.update(:change_active_period, %{period: period_index})
+    {:ok, info} =
+      socket.assigns.sim_id
+      |> SimServer.update(:change_active_period, %{period: period_index})
 
     {:noreply,
      assign(
        socket,
-       :market,
-       market
+       :info,
+       info
      )}
   end
 
   def handle_event("finish-sim", _, socket) do
-    {results_info, market} =
-      with {:ok, market} <- Market.update(socket.assigns.market, :step_forward),
-           results_info <- Market.info(market) do
-        {results_info, market}
+    sim_id = socket.assigns.sim_id
+
+    info =
+      with {:ok, info} <- SimServer.update(sim_id, :step_forward) do
+        info
       end
 
     SimLog.log(:result_viewed, socket.assigns.client_info,
       sim: "market",
-      mode: socket.assigns.mode,
-      periods: length(socket.assigns.market.periods),
-      transactions: length(results_info.price_per_transaction_plot)
+      mode: socket.assigns.mode
     )
 
-    {:noreply,
-     assign(socket, :step, :result)
-     |> assign(:market, market)}
+    {:noreply, assign(socket, :step, :result) |> assign(:info, info)}
   end
 
   # Supporting Functions ********************************************************
@@ -312,13 +274,6 @@ defmodule EcosimWeb.Sim.MarketLive do
     )
   end
 
-  defp parse_content(content) do
-    content
-    |> String.split(",", trim: true)
-    |> Enum.map(&String.trim(&1))
-    |> Enum.reject(&(&1 == ""))
-  end
-
   # Builds the example market.
   #
   # Options:
@@ -329,7 +284,7 @@ defmodule EcosimWeb.Sim.MarketLive do
     market = Market.new(actors, 1)
 
     if Keyword.get(opts, :with_history, false) do
-      {:ok, market} = Market.update(market, :step_forward)
+      {:ok, market} = SimServer.update(market, :step_forward)
       add_test_history(market)
     else
       market
@@ -377,14 +332,14 @@ defmodule EcosimWeb.Sim.MarketLive do
     periods
     |> Enum.reduce(market, fn actions, market ->
       market = Enum.reduce(actions, market, &apply_test_action(&2, &1))
-      {:ok, market} = Market.update(market, :add_period)
+      {:ok, market} = SimServer.update(market, :add_period)
       market
     end)
   end
 
   defp apply_test_action(market, {:offer, name, price}) do
     actor = actor(market, name)
-    {:ok, market} = Market.update(market, :offer, %{actor: actor, price: price})
+    {:ok, market} = SimServer.update(market, :offer, %{actor: actor, price: price})
     market
   end
 
@@ -395,7 +350,7 @@ defmodule EcosimWeb.Sim.MarketLive do
       price: price
     }
 
-    {:ok, market} = Market.update(market, :accept, params)
+    {:ok, market} = SimServer.update(market, :accept, params)
     market
   end
 
@@ -408,9 +363,8 @@ defmodule EcosimWeb.Sim.MarketLive do
     end
   end
 
-  # @spec handle_accept(Market.t(), Actor.t(), Actor.t(), number(), integer()) :: {:noreply, }
   defp handle_accept(
-         %Market{} = market,
+         sim_id,
          %Actor{} = seller,
          %Actor{} = buyer,
          price,
@@ -418,13 +372,13 @@ defmodule EcosimWeb.Sim.MarketLive do
        ) do
     price = parse_price(price)
 
-    case Market.update(
-           market,
+    case SimServer.update(
+           sim_id,
            :accept,
            %{seller: seller, buyer: buyer, price: price}
          ) do
-      {:ok, market} ->
-        {:noreply, socket |> assign(:market, market)}
+      {:ok, info} ->
+        {:noreply, socket |> assign(:info, info)}
 
       {:error, :price_not_in_wt} ->
         {:noreply,
@@ -447,8 +401,8 @@ defmodule EcosimWeb.Sim.MarketLive do
   defp actor_type_to_string(:buyer), do: gettext("Buyer")
   defp actor_type_to_string(:seller), do: gettext("Seller")
 
-  defp actor(%Market{} = market, look_for_name) do
-    %{active_actors: active_actors} = Market.info(market)
+  defp actor(sim_id, look_for_name) do
+    %{active_actors: active_actors} = SimServer.info(sim_id)
     Enum.find(active_actors, &(&1.name == look_for_name))
   end
 end
