@@ -71,6 +71,8 @@ defmodule Ecosim.Sim.Market do
           period: integer()
         }
 
+  @type set_actors_params() :: %{buyers: [Actor.t()], sellers: [Actor.t()]}
+
   @doc """
   Create a new Market with one period from a list of buyers and sellers.
   Or it creates a Market with one period from a list of name and a market model.
@@ -200,6 +202,9 @@ defmodule Ecosim.Sim.Market do
     @spec update(@for.t(), :change_active_period, @for.change_active_period_params()) ::
             {:ok, @for.t()} | {:error, :out_of_range}
 
+    @spec update(@for.t(), :set_actors, @for.set_actors_params()) ::
+            {:ok, @for.t()} | {:error, :not_in_preparation}
+
     def update(%@for{} = market, :add_period, _params) do
       {:ok,
        %@for{
@@ -262,6 +267,17 @@ defmodule Ecosim.Sim.Market do
         }
       }
     end
+
+    # Replace the buyers and sellers, e.g. from an uploaded actors file. Only
+    # allowed before the simulation starts, since it resets the periods.
+    def update(%@for{step: :preparation} = market, :set_actors, %{
+          buyers: buyers,
+          sellers: sellers
+        }) do
+      {:ok, @for.new(buyers, sellers, market.market_model)}
+    end
+
+    def update(%@for{}, :set_actors, _params), do: {:error, :not_in_preparation}
 
     def update(%@for{} = market, :restart_sim, _params) do
       {:ok, @for.new(market)}

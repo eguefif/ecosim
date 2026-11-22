@@ -241,7 +241,6 @@ defmodule Ecosim.SimServer do
   # handle_cast ************************************************************
   @impl true
   def handle_cast(:inspect, state) do
-    IO.inspect(state)
     {:noreply, state}
   end
 

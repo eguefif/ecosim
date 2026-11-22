@@ -3,26 +3,23 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   alias Ecosim.SimServer
   alias Ecosim.Sim.Market.Actor
+  alias Ecosim.Sim.Market.ActorsFile
 
   alias EcosimWeb.SimLog
   alias EcosimWeb.SimLive.MarketLive.PreparationLive, as: Preparation
   alias EcosimWeb.SimLive.MarketLive.ResultsLive, as: Results
   alias EcosimWeb.SimLive.MarketLive.SimLive, as: Sim
 
-  # TODO: if the mode is one-for-all, allow the user to generate a file with
-  # distribution and wt
-  # TODO: also allow the user to upload the same file to set the participants correctly.
-
   @impl true
   def render(assigns) do
-    # TODO: check if we can pass @info to preparation
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.market_header mode={@mode} />
 
       <Preparation.preparation
         :if={@info.step == :preparation}
-        sim_id={@sim_id}
+        info={@info}
+        uploads={@uploads}
       />
 
       <Sim.sim
@@ -35,7 +32,7 @@ defmodule EcosimWeb.Sim.MarketLive do
         :if={@info.step == :result}
         info={@info}
       />
-      {inspect(@info)}
+      <!-- {inspect(@info)} -->
     </Layouts.app>
     """
   end
@@ -79,7 +76,12 @@ defmodule EcosimWeb.Sim.MarketLive do
      |> assign(:mode, SimServer.mode(sim_id))
      |> assign(:info, SimServer.info(sim_id))
      |> assign(:market_model, 1)
-     |> assign(:offer_focus_actor_name, nil)}
+     |> assign(:offer_focus_actor_name, nil)
+     |> allow_upload(:actors_file,
+       accept: ~w(.csv .txt),
+       max_entries: 1,
+       max_file_size: 1_000_000
+     )}
   end
 
   @impl true
@@ -94,13 +96,31 @@ defmodule EcosimWeb.Sim.MarketLive do
 
   # Preparation Events ****************************************************
 
-  def handle_event("user-click-generate-file", _, socket) do
-    info = socket.assigns.info
-    file = create_file(info.buyers ++ info.sellers)
+  def handle_event("validate_actors_upload", _params, socket), do: {:noreply, socket}
 
-    {:noreply,
-     socket
-     |> assign(:actors_file, file)}
+  def handle_event("cancel_actors_upload", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :actors_file, ref)}
+  end
+
+  def handle_event("save_actors_upload", _params, socket) do
+    content =
+      socket
+      |> consume_uploaded_entries(:actors_file, fn %{path: path}, _entry ->
+        {:ok, File.read!(path)}
+      end)
+      |> List.first()
+
+    with content when is_binary(content) <- content,
+         {:ok, actors} <- ActorsFile.decode(content),
+         {:ok, info} <- SimServer.update(socket.assigns.sim_id, :set_actors, actors) do
+      {:noreply,
+       socket
+       |> assign(:info, info)
+       |> put_flash(:info, gettext("Actors updated from the file."))}
+    else
+      nil -> {:noreply, socket}
+      {:error, reason} -> {:noreply, put_flash(socket, :error, actors_file_error(reason))}
+    end
   end
 
   def handle_event("start", _, socket) do
@@ -287,16 +307,27 @@ defmodule EcosimWeb.Sim.MarketLive do
     end
   end
 
-  defp create_file(actors) do
-    actors
-    |> Enum.map(fn actor ->
-      Enum.join([actor_type_to_string(actor.type), actor.name, actor.wt], ",")
-    end)
-    |> Enum.join("\n")
-  end
+  defp actors_file_error(:empty), do: gettext("The file does not contain any actor.")
+  defp actors_file_error(:no_buyers), do: gettext("The file must contain at least one buyer.")
+  defp actors_file_error(:no_sellers), do: gettext("The file must contain at least one seller.")
 
-  defp actor_type_to_string(:buyer), do: gettext("Buyer")
-  defp actor_type_to_string(:seller), do: gettext("Seller")
+  defp actors_file_error({:duplicate_name, name}),
+    do: gettext("The name %{name} is used more than once.", name: name)
+
+  defp actors_file_error({:invalid_line, line}),
+    do: gettext("Line %{line} must have 3 values: role, name, wt.", line: line)
+
+  defp actors_file_error({:invalid_role, line}),
+    do: gettext("Line %{line}: the role must be buyer or seller.", line: line)
+
+  defp actors_file_error({:invalid_name, line}),
+    do: gettext("Line %{line}: the name is missing.", line: line)
+
+  defp actors_file_error({:invalid_wt, line}),
+    do: gettext("Line %{line}: the wt must be a number.", line: line)
+
+  defp actors_file_error(:not_in_preparation),
+    do: gettext("Actors can only be changed before the simulation starts.")
 
   defp actor(sim_id, look_for_name) do
     %{active_actors: active_actors} = SimServer.info(sim_id)
