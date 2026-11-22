@@ -35,6 +35,19 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
 
       <.participants_instructions />
 
+      <div class="flex flex-row items-center gap-[16px]">
+        <span class="text-sm opacity-70">{gettext("No file at hand?")}</span>
+        <button
+          type="button"
+          id="example-participants-button"
+          phx-click="use-example-participants"
+          class="btn btn-secondary btn-sm"
+        >
+          <.icon name="hero-users" class="size-4" />
+          {gettext("Use example list")}
+        </button>
+      </div>
+
       <.participants_upload_form uploads={@uploads} />
 
       <.participants_list :if={@participants != []} participants={@participants} />
@@ -135,9 +148,14 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
     """
   end
 
-  defp participants_example do
-    "Alice, Bruno, Chloé, David, Émilie, François"
-  end
+  @doc """
+  The example participants list, shown in the instructions and loaded by the
+  "Use example list" button.
+  """
+  @spec example_participants() :: [String.t()]
+  def example_participants, do: ["Alice", "Bruno", "Chloé", "David", "Émilie", "François"]
+
+  defp participants_example, do: Enum.join(example_participants(), ", ")
 
   defp upload_error_to_string(:too_large), do: gettext("The file is too large.")
 

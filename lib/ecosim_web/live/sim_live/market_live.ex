@@ -1,9 +1,7 @@
 defmodule EcosimWeb.Sim.MarketLive do
   use EcosimWeb, :live_view
 
-  alias Ecosim.SimulationProtocol
   alias Ecosim.SimServer
-  alias Ecosim.Sim.Market
   alias Ecosim.Sim.Market.Actor
 
   alias EcosimWeb.SimLog
@@ -120,17 +118,6 @@ defmodule EcosimWeb.Sim.MarketLive do
 
     {:noreply, socket |> assign(:info, info)}
   end
-
-  # TODO: Handle this button with GenServer
-  # def handle_event("user-click-default-button", %{}, socket) do
-  #  {:ok, market} = build_test_market() |> SimServer.update(:step_forward, %{})
-
-  #  log_sim_started(socket, market, :example)
-
-  #  {:noreply,
-  #   socket
-  #   |> assign(:market, market)}
-  # end
 
   # Simulation Events ***************************************************
 
@@ -263,96 +250,6 @@ defmodule EcosimWeb.Sim.MarketLive do
   end
 
   # Supporting Functions ********************************************************
-
-  defp log_sim_started(socket, market, source) do
-    SimLog.log(:started, socket.assigns.client_info,
-      sim: "market",
-      mode: socket.assigns.mode,
-      source: source,
-      buyers: length(market.buyers),
-      sellers: length(market.sellers)
-    )
-  end
-
-  # Builds the example market.
-  #
-  # Options:
-  #   * `:with_history` - when `true`, the market is filled with several periods
-  #     containing offers and transactions. Useful to test the results page.
-  defp build_test_market(opts \\ []) do
-    actors = ["Alice", "Bruno", "Chloé", "David", "Émilie", "François"]
-    market = Market.new(actors, 1)
-
-    if Keyword.get(opts, :with_history, false) do
-      {:ok, market} = SimServer.update(market, :step_forward)
-      add_test_history(market)
-    else
-      market
-    end
-  end
-
-  # Buyers: Alice (102), Bruno (100), Chloé (98)
-  # Sellers: David (98), Émilie (100), François (102)
-  defp add_test_history(market) do
-    periods = [
-      [
-        {:offer, "Alice", 96},
-        {:offer, "David", 104},
-        {:offer, "Alice", 99},
-        {:offer, "David", 101},
-        {:accept, "David", "Alice", 101},
-        {:offer, "Bruno", 97},
-        {:offer, "Émilie", 103},
-        {:accept, "Émilie", "Bruno", 100},
-        {:offer, "Chloé", 95},
-        {:offer, "François", 105}
-      ],
-      [
-        {:offer, "Bruno", 98},
-        {:offer, "David", 101},
-        {:accept, "David", "Bruno", 99},
-        {:offer, "Alice", 99},
-        {:offer, "Émilie", 101},
-        {:accept, "Émilie", "Alice", 100},
-        {:offer, "Chloé", 97},
-        {:offer, "François", 103}
-      ],
-      [
-        {:offer, "Chloé", 97},
-        {:offer, "David", 99},
-        {:accept, "David", "Chloé", 98},
-        {:offer, "Alice", 100},
-        {:offer, "Émilie", 100},
-        {:accept, "Émilie", "Alice", 100},
-        {:offer, "Bruno", 99},
-        {:offer, "François", 102}
-      ]
-    ]
-
-    periods
-    |> Enum.reduce(market, fn actions, market ->
-      market = Enum.reduce(actions, market, &apply_test_action(&2, &1))
-      {:ok, market} = SimServer.update(market, :add_period)
-      market
-    end)
-  end
-
-  defp apply_test_action(market, {:offer, name, price}) do
-    actor = actor(market, name)
-    {:ok, market} = SimServer.update(market, :offer, %{actor: actor, price: price})
-    market
-  end
-
-  defp apply_test_action(market, {:accept, seller, buyer, price}) do
-    params = %{
-      seller: actor(market, seller),
-      buyer: actor(market, buyer),
-      price: price
-    }
-
-    {:ok, market} = SimServer.update(market, :accept, params)
-    market
-  end
 
   defp parse_price(price) when is_number(price), do: price
 
