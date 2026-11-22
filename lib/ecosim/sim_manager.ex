@@ -3,7 +3,7 @@ defmodule Ecosim.SimManager do
   The state of one simulation: its id, type, participants and the
   type-specific simulation state (`sim_state`).
 
-  Its functions are pure, except the monitor helpers (`new/3`,
+  Its functions are pure, except the monitor helpers (`new/2`,
   `monitor_liveview/2`, `demonitor_liveview/1`), which must be called from
   inside the `Ecosim.SimServer` process that owns the monitor.
   """
