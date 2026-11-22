@@ -175,6 +175,10 @@ defmodule EcosimWeb.CreateSimLive do
     {:noreply, socket |> assign(:participants, participants)}
   end
 
+  def handle_event("use-example-participants", %{}, socket) do
+    {:noreply, assign(socket, :participants, example_participants())}
+  end
+
   def handle_event("start-sim", %{}, socket) do
     sim_id = socket.assigns.sim
 

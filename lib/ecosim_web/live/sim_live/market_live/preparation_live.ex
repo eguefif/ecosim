@@ -27,14 +27,6 @@ defmodule EcosimWeb.SimLive.MarketLive.PreparationLive do
         {gettext("Start")}
       </button>
       <button
-        type="submit"
-        id="default-list-button"
-        phx-click="user-click-default-button"
-        class="btn btn-secondary"
-      >
-        {gettext("Use example list")}
-      </button>
-      <button
         type="button"
         name="click-generate-file"
         phx-click="user-click-generate-file"
