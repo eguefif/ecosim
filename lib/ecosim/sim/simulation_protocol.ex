@@ -1,4 +1,4 @@
-defprotocol Ecosim.SimulationProtocol do
+defprotocol Ecosim.Sim.SimulationProtocol do
   @type t() :: Ecosim.Sim.Market.t()
 
   @spec update(t(), atom(), map()) :: {:ok, t()} | {:error, term}

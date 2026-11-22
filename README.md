@@ -4,7 +4,30 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
 ## TODO
 
+- [ ] Check for uniqueness in participants list
 - [ ] Create mode multi
+    - [x] add subscriber's list to SimManager
+    - [x] Add the first liveview to this list via monitor and demonitor functions
+    - [x] have two broadcast function: broadcast_all, broadcast_participants
+    - [x] broadcast message for add_participants (except liveview) + update
+    - [x] broadcast when liveview is down to all clients execept liveview
+    - [x] Upon receiving a message, get sim info in market_live.ex
+    - [x] Upon receiving a message, get participants list to display
+    - [ ] When user start joining
+        - [x] Add the name to the sim participant list
+        - [ ]  redirect to market_sim\[id]
+            - [x] Subscribe to sim event
+            - [x] Upon message, get info
+            - [x] In prep, show a message asking to wait
+            - [x] In result, show a message asking to see the main screen
+            - [ ] In sim, display the role, a form to offer a price, a list of counterpar role offers
+            - [ ] Click on a price, scale up the card, show a take offer button
+            - [ ] Show others same role offers
+            - [ ] Show transactions
+            - [ ] When not on the active list, disable the form
+            - [ ] Show the period index number
+    - [x] Monitor participant's liveviews to remove them when waiting for participants. Then we should just ignore in sim.
+
 
 ### Join Code handling
 - [ ] Monitor simulation in a Genserver that monitor simulations.
@@ -19,6 +42,11 @@ Ecosim is a website that provides economic simulators for high school teachers a
 4. Improve market simulator with monopole
 5. Add simulator bank and monetary creation, credits make deposits
 6. Add simulator on inflation
+
+## Sim ideas
+
+- Create offer and demand graph
+- Run my company to understand budget ...
 
 ## Author
 

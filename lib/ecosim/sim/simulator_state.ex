@@ -1,4 +1,4 @@
-defmodule Ecosim.SimulatorState do
+defmodule Ecosim.Sim.SimulatorState do
   use GenServer
 
   # Client ----------------------

@@ -6,9 +6,6 @@ defmodule EcosimWeb.CreateSimLive do
   import EcosimWeb.CreateSimLive.ChooseModeComponent
   import EcosimWeb.CreateSimLive.AddParticipantsComponent
 
-  # TODO: MarketLive must take over the simulation: in mount/3, read
-  #   params["sim_id"] and call Ecosim.SimServer.monitor_liveview/1 when
-  #   connected?(socket), otherwise the server stops 30 seconds after "start-sim".
   # TODO: add the multi mode
   #     - show the join code
   #     - implement an handle_info on :new_participant_sim from the gen server and retrieve the
@@ -17,45 +14,49 @@ defmodule EcosimWeb.CreateSimLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <.header>
-      {gettext("Create a simulation")}
-    </.header>
-    <div class="flex flex-col gap-[32px]">
-      <.show_steps_indicator step={@step} />
-      <div id="steps">
-        <div :if={@step == :choose_sim} id="step-choose-sim" phx-mounted={step_in()}>
-          <.choose_sim sim={sim_type(@sim)} />
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
+      <.header>
+        {gettext("Create a simulation")}
+      </.header>
+      <div class="flex flex-col gap-[32px]">
+        <.show_steps_indicator step={@step} />
+        <div id="steps">
+          <div :if={@step == :choose_sim} id="step-choose-sim" phx-mounted={step_in()}>
+            <.choose_sim sim={sim_type(@sim)} />
+          </div>
+          <div :if={@step == :choose_mode} id="step-choose-mode" phx-mounted={step_in()}>
+            <.choose_mode mode={sim_mode(@sim)} />
+          </div>
+          <div :if={@step == :add_participants} id="step-add-participants" phx-mounted={step_in()}>
+            <.add_participants
+              mode={sim_mode(@sim)}
+              join_code={@join_code}
+              uploads={@uploads}
+              participants={@participants}
+            />
+          </div>
         </div>
-        <div :if={@step == :choose_mode} id="step-choose-mode" phx-mounted={step_in()}>
-          <.choose_mode mode={sim_mode(@sim)} />
-        </div>
-        <div :if={@step == :add_participants} id="step-add-participants" phx-mounted={step_in()}>
-          <.add_participants
-            mode={sim_mode(@sim)}
-            uploads={@uploads}
-            participants={@participants}
-          />
+        <div class="flex flex-row w-max gap-[32px]">
+          <button
+            :if={@step != :choose_sim}
+            id="back-btn"
+            class="btn btn-primary w-[96px] mx-auto"
+            phx-click={go("back")}
+          >
+            {gettext("Back")}
+          </button>
+          <button
+            :if={@step != :choose_sim && @participants != []}
+            id="start-sim"
+            class="btn btn-secondary w-[96px] mx-auto"
+            phx-click="start-sim"
+            phx-disable-with={gettext("Starting...")}
+          >
+            {gettext("Start")}
+          </button>
         </div>
       </div>
-      <div class="flex flex-row w-max gap-[32px]">
-        <button
-          :if={@step != :choose_sim}
-          id="back-btn"
-          class="btn btn-primary w-[96px] mx-auto"
-          phx-click={go("back")}
-        >
-          {gettext("Back")}
-        </button>
-        <button
-          :if={@step != :choose_sim && @participants != []}
-          id="start-sim"
-          class="btn btn-secondary w-[96px] mx-auto"
-          phx-click="start-sim"
-        >
-          {gettext("Start")}
-        </button>
-      </div>
-    </div>
+    </Layouts.app>
     """
   end
 
@@ -105,14 +106,14 @@ defmodule EcosimWeb.CreateSimLive do
   defp numbered_step(:add_participants), do: 3
 
   defp sim_type(sim) do
-    case Ecosim.SimServer.type(sim) do
+    case Ecosim.Sim.SimServer.type(sim) do
       nil -> nil
       type when is_atom(type) -> Atom.to_string(type)
     end
   end
 
   defp sim_mode(sim) do
-    case Ecosim.SimServer.mode(sim) do
+    case Ecosim.Sim.SimServer.mode(sim) do
       nil -> nil
       mode when is_atom(mode) -> Atom.to_string(mode)
     end
@@ -122,7 +123,7 @@ defmodule EcosimWeb.CreateSimLive do
 
   @impl true
   def mount(_parms, _session, socket) do
-    {:ok, sim} = Ecosim.SimServer.start()
+    {:ok, sim} = Ecosim.Sim.SimServer.start()
 
     {:ok,
      socket
@@ -140,14 +141,18 @@ defmodule EcosimWeb.CreateSimLive do
 
   @impl true
   def handle_event("choose-sim", %{"sim" => sim_type}, socket) do
-    :ok = Ecosim.SimServer.set_sim_type(socket.assigns.sim, sim_type)
+    :ok = Ecosim.Sim.SimServer.set_sim_type(socket.assigns.sim, sim_type)
     {:noreply, socket |> assign(:step, :choose_mode)}
   end
 
   @impl true
   def handle_event("choose-mode", %{"mode" => mode}, socket) do
-    :ok = Ecosim.SimServer.set_sim_mode(socket.assigns.sim, mode)
-    {:noreply, socket |> assign(:step, :add_participants)}
+    :ok = Ecosim.Sim.SimServer.set_sim_mode(socket.assigns.sim, mode)
+
+    {:noreply,
+     socket
+     |> assign(:step, :add_participants)
+     |> assign(:join_code, Ecosim.Sim.SimServer.join_code(socket.assigns.sim))}
   end
 
   @impl true
@@ -182,11 +187,12 @@ defmodule EcosimWeb.CreateSimLive do
   def handle_event("start-sim", %{}, socket) do
     sim_id = socket.assigns.sim
 
-    :ok = Ecosim.SimServer.add_participants_to_simulation(sim_id, socket.assigns.participants)
-    sim_path = Ecosim.SimServer.route_path(sim_id)
+    :ok = Ecosim.Sim.SimServer.set_participants(sim_id, socket.assigns.participants)
+    sim_path = Ecosim.Sim.SimServer.route_path(sim_id)
 
-    :ok = Ecosim.SimServer.demonitor_liveview(sim_id)
-    :ok = Ecosim.SimServer.create_simulation(sim_id)
+    # We demonitor because the simulation will be monitored in the next liveview.
+    :ok = Ecosim.Sim.SimServer.demonitor_simulation_liveview(sim_id)
+    :ok = Ecosim.Sim.SimServer.create_simulation(sim_id)
 
     {:noreply, push_navigate(socket, to: sim_path)}
   end
@@ -213,5 +219,18 @@ defmodule EcosimWeb.CreateSimLive do
       |> List.first()
 
     {:noreply, assign(socket, :participants, parse_participants(content))}
+  end
+
+  # handle_info *******************************************
+
+  @impl true
+  def handle_info(:new_participants, socket) do
+    sim_id = socket.assigns.sim
+    {:noreply, socket |> assign(:participants, Ecosim.Sim.SimServer.sim_participants(sim_id))}
+  end
+
+  def handle_info(:remove_participant, socket) do
+    sim_id = socket.assigns.sim
+    {:noreply, socket |> assign(:participants, Ecosim.Sim.SimServer.sim_participants(sim_id))}
   end
 end

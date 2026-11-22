@@ -10,18 +10,22 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
   use EcosimWeb, :html
 
   attr :mode, :string, doc: "the selected mode"
+  attr :join_code, :integer
   attr :uploads, :map, required: true
   attr :participants, :list, default: []
 
   def add_participants(assigns) do
     ~H"""
-    test {@mode}
     <.add_participants_one_for_all
       :if={@mode == "one_for_all"}
       uploads={@uploads}
       participants={@participants}
     />
-    <.add_participants_multi :if={@mode == :multi} />
+    <.add_participants_multi
+      :if={@mode == "multi"}
+      join_code={@join_code}
+      participants={@participants}
+    />
     """
   end
 
@@ -52,11 +56,6 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
 
       <.participants_list :if={@participants != []} participants={@participants} />
     </div>
-    """
-  end
-
-  def add_participants_multi(assigns) do
-    ~H"""
     """
   end
 
@@ -125,6 +124,7 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
   end
 
   attr :participants, :list, required: true
+  attr :removable, :boolean, default: true, doc: "show a remove button on each participant"
 
   def participants_list(assigns) do
     ~H"""
@@ -136,6 +136,7 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
       >
         <span class="text-lg font-bold truncate">{name}</span>
         <button
+          :if={@removable}
           class="btn btn-square btn-ghost btn-xs absolute top-1 right-1"
           phx-click="remove-participant"
           phx-value-participant={name}
@@ -144,6 +145,31 @@ defmodule EcosimWeb.CreateSimLive.AddParticipantsComponent do
           <.icon name="hero-x-mark" class="size-4" />
         </button>
       </div>
+    </div>
+    """
+  end
+
+  attr :join_code, :integer, required: true
+  attr :participants, :list, default: []
+
+  def add_participants_multi(assigns) do
+    ~H"""
+    <div class="flex flex-col gap-[16px]">
+      <h2 class="text-lg font-bold">{gettext("Wait for participants to connect")}</h2>
+      <div class="shadow-md rounded-lg mx-auto w-[192px] flex flex-col justify-center items-center p-[32px] gap-[32px]">
+        <div class="text-xl">{gettext("Code")}</div>
+        <div class="text-5xl">{@join_code}</div>
+      </div>
+
+      <.participants_list :if={@participants != []} participants={@participants} removable={false} />
+      <p
+        :if={@participants == []}
+        id="participants-waiting"
+        class="flex items-center justify-center gap-2 text-sm opacity-70"
+      >
+        <span class="loading loading-dots loading-sm"></span>
+        {gettext("No participant has joined yet")}
+      </p>
     </div>
     """
   end

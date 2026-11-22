@@ -1,13 +1,7 @@
 defmodule EcosimWeb.JoinSimLive do
   use EcosimWeb, :live_view
 
-  # TODO:: should retrieve the simulator from the code
-  # TODO: should check the type and push_navigate to the client market_live page
-  # TODO: this page will update the GenServer with the process pid
-  # TODO: it will implement a handle_info to get :update message from the GenServer
-  #          use the info function to get the new state.
-  # TODO: it will implement an handle_info to get :start message
-  #           Change the view to display participants info
+  alias Ecosim.Sim.SimServer
 
   @impl true
   def render(assigns) do
@@ -57,14 +51,16 @@ defmodule EcosimWeb.JoinSimLive do
 
   @impl true
   def handle_event("join-sim", %{"name" => name, "code" => code}, socket) do
-    case :ets.lookup(:sim_registry, code |> String.to_integer()) do
-      [{_, route}] ->
-        {:noreply, socket |> push_navigate(to: create_path(route, code, name))}
+    sim_id = String.to_integer(code)
 
-      [] ->
+    case SimServer.simulation?(sim_id) do
+      true ->
+        :ok = SimServer.add_participant_to_simulation(sim_id, name)
+        route = SimServer.route_path(sim_id, name)
+        {:noreply, socket |> push_navigate(to: route)}
+
+      false ->
         {:noreply, socket |> put_flash(:error, gettext("There is no simulation for this code"))}
     end
   end
-
-  defp create_path("market", code, name), do: ~p"/sim/join-market?name=#{name}&code=#{code}"
 end

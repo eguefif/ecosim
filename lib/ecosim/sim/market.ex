@@ -168,7 +168,7 @@ defmodule Ecosim.Sim.Market do
     new(buyers, sellers, market_model)
   end
 
-  defimpl Ecosim.SimulationProtocol do
+  defimpl Ecosim.Sim.SimulationProtocol do
     @doc """
     Update the market according to the action and params.
     Possible actions `t:action/0`:

@@ -73,9 +73,9 @@ defmodule EcosimWeb.Router do
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
 
-      scope "/sim", Sim do
+      scope "/sim", SimLive do
         live "/market/:sim_id", MarketLive, :index
-        live "/join-market", MarketLive.JoinLive, :index
+        live "/join-market/:sim_id", MarketLive.JoinMarketSimLive, :index
       end
     end
 

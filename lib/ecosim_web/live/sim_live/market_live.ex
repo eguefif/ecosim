@@ -1,7 +1,7 @@
-defmodule EcosimWeb.Sim.MarketLive do
+defmodule EcosimWeb.SimLive.MarketLive do
   use EcosimWeb, :live_view
 
-  alias Ecosim.SimServer
+  alias Ecosim.Sim.SimServer
   alias Ecosim.Sim.Market.Actor
   alias Ecosim.Sim.Market.ActorsFile
 
@@ -65,9 +65,7 @@ defmodule EcosimWeb.Sim.MarketLive do
   @impl true
   def mount(%{"sim_id" => sim_id}, _session, socket) do
     sim_id = String.to_integer(sim_id)
-    if connected?(socket), do: SimServer.monitor_liveview(sim_id)
-
-    SimServer.inspect_sim(sim_id)
+    if connected?(socket), do: SimServer.monitor_simulation_liveview(sim_id)
 
     {:ok,
      socket
@@ -267,6 +265,15 @@ defmodule EcosimWeb.Sim.MarketLive do
     )
 
     {:noreply, assign(socket, :step, :result) |> assign(:info, info)}
+  end
+
+  # handle_info ********************************
+
+  @impl true
+  def handle_info(:update, socket) do
+    sim_id = socket.assigns.sim_id
+    info = SimServer.info(sim_id)
+    {:noreply, assign(socket, :info, info)}
   end
 
   # Supporting Functions ********************************************************
