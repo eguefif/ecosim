@@ -60,10 +60,11 @@ defmodule Ecosim.SimServer do
   def join_code(id), do: GenServer.call(via(id), :join_code)
 
   @doc """
-  Return the simulation `id`, with its `sim_state` replaced by the info computed
-  by `Ecosim.SimulationProtocol.info/1`.
+  Return the info of simulation `id`, as computed by
+  `Ecosim.SimulationProtocol.info/1`. Its content depends on the simulation
+  type and step.
   """
-  @spec info(sim_id()) :: SimManager.t()
+  @spec info(sim_id()) :: map()
   def info(id), do: GenServer.call(via(id), :info)
 
   @doc """
@@ -150,7 +151,7 @@ defmodule Ecosim.SimServer do
   @doc """
   Return the simulation participants list.
   """
-  @spec sim_participants(sim_id()) :: list()
+  @spec sim_participants(sim_id()) :: [String.t()]
   def sim_participants(id) do
     GenServer.call(via(id), :participants)
   end

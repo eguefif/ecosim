@@ -55,13 +55,17 @@ defmodule Ecosim.Sim.Market do
           market_model: integer()
         }
   @type sim_info() :: %{
-          transactions: [Action.t()],
-          sellers: [%{actor: String.t(), last_offer: number()}],
-          buyers: [%{actor: String.t(), last_offer: number()}],
-          active_actors: [Actor.t()]
+          transactions: [%{actor: String.t(), price: number()}],
+          sellers: [%{name: String.t(), price: number()}],
+          buyers: [%{name: String.t(), price: number()}],
+          active_actors: [Actor.t()],
+          periods_length: pos_integer(),
+          active_period_index: non_neg_integer(),
+          step: :sim
         }
 
   @type result_info() :: %{
+          step: :result,
           market_plot: list(),
           price_per_transaction_plot: list(),
           transactions_per_period_plot: list()
@@ -74,11 +78,10 @@ defmodule Ecosim.Sim.Market do
   @type set_actors_params() :: %{buyers: [Actor.t()], sellers: [Actor.t()]}
 
   @doc """
-  Create a new Market with one period from a list of buyers and sellers.
-  Or it creates a Market with one period from a list of name and a market model.
-  The market model with define what WTs distribution to use.
+  Create a new Market with one period from a list of `buyers` and `sellers`
+  whose WTs are already set.
   """
-  @spec new(buyers(), sellers()) :: t()
+  @spec new(buyers(), sellers(), integer()) :: t()
   def new(buyers, sellers, market_model)
       when is_list(buyers) and is_list(sellers) do
     period = Period.new(buyers ++ sellers)
@@ -93,6 +96,13 @@ defmodule Ecosim.Sim.Market do
     }
   end
 
+  @doc """
+  Create a new Market with one period from a list of `actors`' names.
+
+  The first half of the names become buyers, the second half sellers, and their
+  WTs are spread around a price of 100. `market_model` is meant to choose the WT
+  distribution, but is not used yet.
+  """
   @spec new([String.t()], integer()) :: t()
   def new(actors, market_model)
       when is_integer(market_model) and is_list(actors) do
@@ -407,6 +417,7 @@ defmodule Ecosim.Sim.Market do
       }
     end
 
+    @spec active_period(@for.t()) :: Period.t()
     defp active_period(%@for{} = market) do
       Enum.at(market.periods, market.active_period_index)
     end

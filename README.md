@@ -4,34 +4,7 @@ Ecosim is a website that provides economic simulators for high school teachers a
 
 ## TODO
 
-- [x] Refactor current `market.ex` and `market_live.ex`, it should only use `market.ex` for everything
-    - [x] `new/0`: returns a market with initial `market_model` set to 1
-    - [x] `update(market, command, params \\ %{})` should handle the following:
-        - [x] `:change_period`
-        - [x] `:change_step`
-        - [x] `:change_market_model`
-    - [x] `info(market)`: returns a map depending on the step
-        - [x] `:preparation`: returns the current list of participants and market_model
-        - [x] `:sim`: returns the list of transactions, the list of active actors with their last offer, actor's type and wt
-        - [x] `:result`: returns the market_data, price_per_transaction, quantity per period datasets
-- [ ] Refactor `create_sim`: three steps. One to choose mode and sim, one to add participants
-    - [ ] Create the sim on def mount and register to registry.
-    - [ ] Add add_participants module.
-    - [ ] Add animated transition between step.
-- [ ] Create a `Simulator` module to handle logic and define state model
-    - [x] Keep track of list of actors
-    - [x] Keep track of simulation type via the Module name
-    - [x] keep track of the joining code
-    - [ ] Provides the following interface
-        - [ ] `start_links(simulation_type)`, register the GenServer to the registry using via and create a joining code, returns a Simulator. Use the self() before starting the genserver to register the liveview as a event consummer.
-        - [x] `join_code`: returns the join_code
-        - [x] `add_participants`: add participants
-        - [x] `update(command, params \\ %{})` update the sim
-        - [x] `info()`: returns a map with the sim information
-- [ ] Create a `SimulatorServer` to handle simulation state
-    - [ ] Create a `Simulator`
-    - [ ] Monitor the associated liveview process
-- [ ] Create a `SimulatorRegistry` to keep track of simulation
+- [ ] Create mode multi
 
 ### Join Code handling
 - [ ] Monitor simulation in a Genserver that monitor simulations.
