@@ -90,3 +90,7 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Keep a market simulation with id 1 always running (see Ecosim.Sim.DevSim).
+# Join it at /sim/join-market/1?name=Alice (or Bob, Carol, Dave).
+config :ecosim, start_dev_sim: true
