@@ -236,7 +236,7 @@ defmodule EcosimWeb.SimLive.MarketLive.SimLive do
     """
   end
 
-  defp transaction_text(seller, buyer, price) do
+  def transaction_text(seller, buyer, price) do
     gettext("%{seller} sells to %{buyer} at the price of %{price}",
       seller: bold(seller),
       buyer: bold(buyer),

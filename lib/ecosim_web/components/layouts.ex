@@ -139,6 +139,10 @@ defmodule EcosimWeb.Layouts do
   """
   attr :locale, :string, default: nil
 
+  attr :id_prefix, :string,
+    default: "locale",
+    doc: "prefix of the DOM ids, to render the toggle more than once on a page"
+
   def locale_toggle(assigns) do
     assigns =
       assigns
@@ -147,7 +151,7 @@ defmodule EcosimWeb.Layouts do
 
     ~H"""
     <div
-      id="locale-toggle"
+      id={"#{@id_prefix}-toggle"}
       class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full"
       aria-label={gettext("Language")}
     >
@@ -158,7 +162,7 @@ defmodule EcosimWeb.Layouts do
 
       <.link
         :for={{code, short, name} <- @locales}
-        id={"locale-#{code}"}
+        id={"#{@id_prefix}-#{code}"}
         href={~p"/locale/#{code}"}
         hreflang={code}
         lang={code}

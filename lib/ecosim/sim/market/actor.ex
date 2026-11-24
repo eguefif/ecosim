@@ -63,4 +63,20 @@ defmodule Ecosim.Sim.Market.Actor do
       price >= wt
     end
   end
+
+  @doc """
+  Returns the name of the actor
+  """
+  @spec name(t()) :: String.t()
+  def name(%__MODULE__{} = actor) do
+    actor.name
+  end
+
+  @doc """
+  Returns the type of the actor
+  """
+  @spec type(t()) :: :buyer | :seller
+  def type(%__MODULE__{} = actor) do
+    actor.type
+  end
 end

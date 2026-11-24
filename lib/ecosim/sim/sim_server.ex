@@ -384,19 +384,11 @@ defmodule Ecosim.Sim.SimServer do
         {:DOWN, ref, :process, _, _},
         %SimManager{participants_liveviews: liveviews} = state
       ) do
-    IO.puts("HEYYYYYYYYYYYYY")
-    IO.inspect(ref)
-    IO.inspect(state)
-
     state =
       if Enum.any?(liveviews, &(&1.ref == ref)) do
         broadcast(:remove_participant, state)
         SimManager.remove_participant_from_ref(state, ref)
       end
-
-    IO.puts("--------------------")
-    IO.inspect(state)
-    IO.puts("--------------------")
 
     {:noreply, state}
   end

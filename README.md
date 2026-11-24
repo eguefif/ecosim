@@ -20,11 +20,10 @@ Ecosim is a website that provides economic simulators for high school teachers a
             - [x] Upon message, get info
             - [x] In prep, show a message asking to wait
             - [x] In result, show a message asking to see the main screen
-            - [ ] In sim, display the role, a form to offer a price, a list of counterpar role offers
+            - [x] In sim, display the role, a form to offer a price, a list of counterpar role offers
+            - [ ] Show offers and transaction
+            - [ ] Make input and offer button add a new offer
             - [ ] Click on a price, scale up the card, show a take offer button
-            - [ ] Show others same role offers
-            - [ ] Show transactions
-            - [ ] When not on the active list, disable the form
             - [ ] Show the period index number
     - [x] Monitor participant's liveviews to remove them when waiting for participants. Then we should just ignore in sim.
 

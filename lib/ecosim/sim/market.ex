@@ -403,6 +403,7 @@ defmodule Ecosim.Sim.Market do
       |> Map.merge(%{
         periods_length: length(market.periods),
         active_period_index: market.active_period_index,
+        actors: market.sellers ++ market.buyers,
         step: market.step
       })
     end

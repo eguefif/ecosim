@@ -512,3 +512,13 @@ msgstr "Choisir"
 #, elixir-autogen, elixir-format
 msgid "Seller's offers"
 msgstr "Offres des vendeurs"
+
+#: lib/ecosim_web/components/layouts/root.html.heex
+#, elixir-autogen, elixir-format
+msgid "Settings"
+msgstr "Paramètres"
+
+#: lib/ecosim_web/components/layouts/root.html.heex
+#, elixir-autogen, elixir-format
+msgid "Theme"
+msgstr "Thème"

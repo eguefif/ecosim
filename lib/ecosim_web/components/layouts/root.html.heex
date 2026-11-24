@@ -39,18 +39,76 @@
     </script>
   </head>
   <body class="min-h-screen flex flex-col">
-    <header class="navbar bg-base-100 shadow-sm flex flex-row justify-between w-full">
-      <a class="btn btn-ghost text-xl" href="/">Ecosim</a>
+    <header
+      id="site-header"
+      class="navbar bg-base-100 shadow-sm flex flex-row justify-between gap-1 w-full px-2 md:px-4"
+    >
+      <a
+        class="btn btn-ghost btn-sm md:btn-md text-lg md:text-xl px-2 md:px-4"
+        href="/"
+      >Ecosim</a>
 
-      <ul class="menu menu-horizontal relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
+      <%!-- Main actions: always visible, compact on small screens --%>
+      <ul
+        id="main-nav"
+        class="menu menu-horizontal relative z-10 flex flex-nowrap items-center gap-1 md:gap-4 p-0 md:px-6 lg:px-8"
+      >
         <li>
-          <.link href={~p"/create-sim"} class="btn btn-ghost">{gettext("Create")}</.link>
+          <.link
+            id="nav-create"
+            href={~p"/create-sim"}
+            class="btn btn-ghost btn-sm md:btn-md px-2 md:px-4"
+          >
+            <.icon name="hero-plus-circle" class="size-5 hidden sm:inline-block" />
+            {gettext("Create")}
+          </.link>
         </li>
         <li>
-          <.link href={~p"/join-sim"} class="btn btn-ghost">{gettext("Join")}</.link>
+          <.link
+            id="nav-join"
+            href={~p"/join-sim"}
+            class="btn btn-ghost btn-sm md:btn-md px-2 md:px-4"
+          >
+            <.icon name="hero-arrow-right-end-on-rectangle" class="size-5 hidden sm:inline-block" />
+            {gettext("Join")}
+          </.link>
         </li>
       </ul>
-      <ul class="menu menu-horizontal relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
+
+      <%!-- Settings, small screens: language and theme in a dropdown --%>
+      <div id="settings-dropdown" class="dropdown dropdown-end md:hidden">
+        <div
+          tabindex="0"
+          role="button"
+          class="btn btn-ghost btn-sm btn-circle"
+          aria-label={gettext("Settings")}
+        >
+          <.icon name="hero-adjustments-horizontal" class="size-5" />
+        </div>
+        <div
+          tabindex="0"
+          class="dropdown-content z-20 mt-2 w-52 rounded-box border border-base-300 bg-base-100 p-4 shadow-lg flex flex-col gap-4"
+        >
+          <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide opacity-60">
+              {gettext("Language")}
+            </span>
+            <.locale_toggle id_prefix="mobile-locale" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide opacity-60">
+              {gettext("Theme")}
+            </span>
+            <.theme_toggle />
+          </div>
+        </div>
+      </div>
+
+      <%!-- Settings, md and up: inline --%>
+      <ul
+        id="settings-inline"
+        class="menu menu-horizontal relative z-10 hidden md:flex items-center gap-4 px-4 sm:px-6 lg:px-8"
+      >
         <li>
           <.locale_toggle />
         </li>
